@@ -1,7 +1,14 @@
+"""
+Validates a degree plan against the gold requirements and a frozen snapshot.
+
+Runs exactly five checks: duplicate credit, credit-exclusion, term availability,
+prereq/coreq ordering, and the global requirement matching and collecting every
+failure instead of stopping at the first.
+"""
+
+
 from __future__ import annotations
-
 from dataclasses import dataclass, field
-
 from .config import DEFAULT_CONFIG, EngineConfig
 from .expr import EvalContext, evaluate
 from .gold import DEFAULT_GOLD, Gold
@@ -46,7 +53,8 @@ def validate(
     cfg: EngineConfig = DEFAULT_CONFIG,
 ) -> ValidationResult:
     gold = gold or Gold.load(DEFAULT_GOLD)
-    if snap is None:
+    # Validation must be reproducible so it reads only a frozen snapshot and never the live catalogue.
+    if snap is None: 
         raise ValueError("validate() requires a frozen offerings snapshot (no live calls)")
 
     failures: list[Failure] = []
@@ -79,6 +87,10 @@ def validate(
             failures.append(Failure("credit_exclusion",
                                     f"at most one of {excl.courses} may earn credit", clash))
 
+
+
+    # Exact-term offering if the snapshot knows that term otherwise fall back to
+    # season recurrence (e.g. "offered every Fall") for terms past the snapshot horizon.
     for t in plan.terms:
         for c in t.courses:
             if c not in snap.courses:
@@ -92,11 +104,16 @@ def validate(
                 failures.append(Failure("not_offered",
                                         f"{c} is not offered in {t.term}; offered: {terms}", [c]))
 
+
+    # Prereqs must be met by a STRICTLY earlier term and coreqs may be met in the
+    # same term so they get the wider `same_or_before` set.
     for i, t in enumerate(plan.terms):
         before = set(plan.taken) | {c for tt in plan.terms[:i] for c in tt.courses}
         same_or_before = before | set(t.courses)
         for c in t.courses:
             entry = gold.prerequisites.get(c)
+            # No verified prereq entry: the full parser is deferred so flag
+            # program courses as unverified rather than passing them silently.
             if entry is None:
                 if c in prog and c not in gold.named_courses():
                     notes.append(f"{c}: prereq unverified (no DAG entry; Phase B parser)")
@@ -115,7 +132,7 @@ def validate(
     creditable = earned - reqs.ineligible
     match = match_requirements(creditable, reqs, gold, snap, cfg)
     if not match.satisfied:
-        for sr in match.unmet():
+        for sr in match.unmet(): # "pick exactly one" slots get a named-requirement message
             if sr.required_units == 1.0 and sr.shortfall_units >= 1.0 and sr.label and "u from" not in sr.label and "u matching" not in sr.label:
                 detail = f"unmet requirement '{sr.group_id}': need {sr.label}"
             else:

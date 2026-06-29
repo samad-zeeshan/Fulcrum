@@ -1,3 +1,10 @@
+"""
+Freshness and router-drift checks for the report.
+
+Freshness compares two dated snapshots; router drift checks the route stays the
+same across paraphrases of one question.
+"""
+
 from __future__ import annotations
 
 import json
@@ -35,6 +42,7 @@ def freshness(snap1_path=SNAP1, snap2_path=SNAP2) -> dict:
 
     rows = []
 
+    # Replay the seeded changes and confirm data answers move between snapshots.
     for m in d2.get("drift_manifest", []):
         course, term = m["course"], m.get("term", "")
         if m["kind"] in ("term_drop", "term_add"):
@@ -48,6 +56,7 @@ def freshness(snap1_path=SNAP1, snap2_path=SNAP2) -> dict:
             rows.append((f"{course} {term} lecture time", "data", m.get("old_time_start", "?"),
                          m.get("new_time_start", "?"), True))
 
+    # Rule answers should not move; they come from gold, not the snapshot.
     stable = []
     for c in ["CMPUT 204", "CMPUT 291", "CMPUT 401"]:
         p1 = s1.courses.get(c)
@@ -66,6 +75,7 @@ def freshness(snap1_path=SNAP1, snap2_path=SNAP2) -> dict:
     return {"freshness_md": "\n".join(md), "synthetic": bool(d2.get("synthetic")),
             "changed": changed, "data_total": len(rows)}
 
+# Same question reworded should keep the same route; count how often it flips.
 def router_drift() -> dict:
     flips = 0
     total = 0

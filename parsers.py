@@ -1,3 +1,11 @@
+"""
+Pure HTML to structured records, with no network or state.
+
+Courses come from ua__cat_* meta tags plus the section tables; programs come
+from Acalog requirement blocks. Requirement strings are captured verbatim with
+no boolean prereq logic.
+"""
+
 from __future__ import annotations
 
 import re
@@ -15,6 +23,7 @@ def _clean(text: str | None) -> str:
         return ""
     return re.sub(r"\s+", " ", text.replace(NBSP, " ")).strip()
 
+# The ua__cat_* meta tags in the page head are the primary structured source.
 def _metas(tree: HTMLParser) -> dict[str, str]:
     out: dict[str, str] = {}
     for m in tree.css("meta[name^='ua__cat']"):
@@ -40,6 +49,8 @@ def _to_int(s: str | None) -> int | None:
     except ValueError:
         return None
 
+# Lead-in phrases that mark each requirement clause inside the description prose.
+# Order matters: combined pre/co requisite patterns come before the plain ones.
 _LEADINS: list[tuple[str, str]] = [
     ("combined", r"Prerequisites?\s+or\s+co-?\s?requisites?\s*:?"),
     ("combined", r"Pre-?\s*(?:and|/|or)\s*co-?\s?requisites?\s*:?"),
@@ -50,6 +61,9 @@ _LEADINS: list[tuple[str, str]] = [
     ("note", r"See Note|Notes?\s*:?"),
 ]
 
+# Split the description into prereq/coreq/credit-exclusion strings by lead-in
+# phrase. Longest non-overlapping match wins and the text is kept verbatim; no
+# boolean prereq logic happens here.
 def extract_requirements(description: str) -> tuple[dict[str, str | None], list[str]]:
     text = _clean(description)
     flags: list[str] = []
@@ -82,7 +96,8 @@ def extract_requirements(description: str) -> tuple[dict[str, str | None], list[
             if fields["coreq_raw"] is None:
                 fields["coreq_raw"] = value
         elif kind == "combined":
-
+            # "Prerequisite or corequisite" clauses go into both fields since
+            # either reading is valid.
             if fields["prereq_raw"] is None:
                 fields["prereq_raw"] = value
             if fields["coreq_raw"] is None:
@@ -208,6 +223,7 @@ def parse_course(html: str, source_url: str, fetched_at: str | None = None) -> t
     subject = meta.get("ua__cat_subject")
     catalog = meta.get("ua__cat_catalog")
 
+    # Meta tags are primary; fall back to the page h1 only if they are missing.
     if not (course_id and subject and catalog):
         flags.append(f"missing-course-meta:{source_url}")
         h1 = tree.css_first("h1")
@@ -325,6 +341,8 @@ def _parse_sections(
     body = tree.css_first("body") or tree.root
     nodes = list(_dfs(body, {"h2", "h3", "table", "p"}))
 
+    # Walk the body in order, tracking the current term heading so each section
+    # table is tagged with the term it sits under.
     current_term: str | None = None
     current_term_code: str | None = None
     awaiting_term_note = False
@@ -450,6 +468,9 @@ def _has_nested_core(core: Node) -> bool:
 
 _RULE_RE = re.compile(r"(\d+\s*units?\b|\bfrom\b|★|\bone of\b|\beach of\b|\bunits? from\b)", re.I)
 
+# Parse an Acalog program page into requirement blocks. Confidence drops to
+# needs_review on unparseable course codes or empty rule blocks, and the raw
+# HTML of any shaky block is dumped for manual checking.
 def parse_program(
     html: str,
     poid: str,

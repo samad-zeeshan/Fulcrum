@@ -1,3 +1,10 @@
+"""
+Turns span text into vectors for retrieval.
+
+Default is a deterministic hashing TF-IDF so offline runs need no torch; a
+sentence-transformers embedder is used instead when it is installed.
+"""
+
 from __future__ import annotations
 
 import re
@@ -10,6 +17,8 @@ _TOKEN = re.compile(r"[a-z]+|\d{3}")
 def _tokenize(text: str) -> list[str]:
     toks = _TOKEN.findall(text.lower())
 
+    # Also emit a glued letter+number token so a course code like CMPUT 174
+    # survives as one feature, not two unrelated ones.
     merged = []
     for i, t in enumerate(toks):
         merged.append(t)
@@ -28,6 +37,8 @@ class Embedder(Protocol):
 
     def encode(self, texts: list[str]) -> np.ndarray: ...
 
+# Deterministic bag-of-words vectors via feature hashing. No model download,
+# so CI and offline eval work with no extra dependencies.
 class HashingEmbedder:
 
     def __init__(self, dim: int = 1024, seed: int = 0, idf: np.ndarray | None = None):
@@ -85,6 +96,7 @@ def get_embedder(kind: str = "auto", **kw) -> Embedder:
         return SentenceTransformerEmbedder(**kw)
     if kind == "hashing":
         return HashingEmbedder(**kw)
+    # auto prefers the dense model but falls back to hashing if it is missing.
     if kind == "auto":
         try:
             return SentenceTransformerEmbedder(**kw)

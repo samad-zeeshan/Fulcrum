@@ -1,3 +1,9 @@
+"""
+Offline pass: turns the cached raw HTML into structured JSONL and a run report.
+
+Deterministic and network-free; reads only what fetch.py left in corpus/raw.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +14,8 @@ import config
 import parsers
 import util
 
+# Union of what the manifest recorded and whatever HTML is actually on disk, so
+# a parse still works if the manifest is incomplete.
 def _course_files(manifest: dict[str, dict]) -> list[dict]:
     out: dict[str, dict] = {}
     for url, rec in manifest.items():
@@ -51,6 +59,8 @@ def _program_files(manifest: dict[str, dict]) -> list[dict]:
             }
     return [out[k] for k in sorted(out)]
 
+# Parse every cached course. Odd shapes are pushed to failure_queue for human
+# review rather than raised, so one bad page never stops the run.
 def parse_all_courses(manifest: dict[str, dict], failure_queue: list[dict]) -> list[dict]:
     records: list[dict] = []
     for item in _course_files(manifest):
@@ -103,6 +113,8 @@ def build_report(
     ugrd = sum(1 for c in courses if c.get("career") == "UGRD")
     grad = sum(1 for c in courses if c.get("career") and c["career"] != "UGRD")
 
+    # Cross-check parsed section counts against the ua__cat_sections meta hint;
+    # a mismatch usually means the section table parser missed something.
     mismatches = []
     for c in courses:
         meta = c.get("meta_sections")
@@ -221,6 +233,8 @@ def build_report(
     L.append("")
     return "\n".join(L)
 
+# Prefer courses that actually have sections, with CMPUT 174 first as a stable
+# sample for the report.
 def _pick_samples(courses: list[dict]) -> list[dict]:
     with_sec = [c for c in courses if c["sections"]]
     pool = with_sec or courses

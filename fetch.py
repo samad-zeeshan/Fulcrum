@@ -1,3 +1,10 @@
+"""
+Fetches raw catalogue HTML into corpus/raw, resumable via the manifest.
+
+Course pages come over plain HTTP; program pages sit behind an AWS-WAF
+challenge and need a headless browser.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -27,6 +34,7 @@ class CourseFetcher:
     def close(self) -> None:
         self.client.close()
 
+    # Retry transient transport and 5xx/429 errors with exponential backoff.
     def _get(self, url: str) -> httpx.Response | None:
         delay = config.BACKOFF_BASE
         for attempt in range(1, config.MAX_RETRIES + 1):
@@ -52,6 +60,7 @@ class CourseFetcher:
         return None
 
     def fetch(self, url: str, dest: Path, kind: str, **extra) -> str | None:
+        # Honour robots, then skip anything already cached unless forced.
         if not util.apps_path_allowed(url):
             self.failed.append((url, "robots-disallowed"))
             return None
@@ -126,7 +135,10 @@ class CourseFetcher:
             seen[(s.lower(), n.lower())] = None
         return sorted(seen.keys())
 
+# Programs live on calendar.ualberta.ca behind an AWS-WAF JS challenge, so this
+# fetcher drives a real browser instead of a plain HTTP client.
 class ProgramFetcher:
+    # Strings that only appear while the WAF interstitial is still showing.
     CHALLENGE_MARKERS = ("challenge-container", "awsWafCookieDomainList", "AwsWafIntegration")
 
     def __init__(self, manifest: dict[str, dict], force: bool):
@@ -161,6 +173,9 @@ class ProgramFetcher:
             self.failed.append((url, f"goto: {exc}"))
             return None
 
+        # The challenge JS reloads the page, so page.content() can race the
+        # navigation. Poll until the markers are gone and real content has
+        # loaded, swallowing the transient errors in between.
         html = ""
         for _ in range(60):
             try:

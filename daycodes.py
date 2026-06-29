@@ -1,8 +1,16 @@
+"""
+Parses a section's schedule cell into structured meetings.
+
+Handles single-letter day codes (M T W R F, R is Thursday), date ranges and
+start/end times, and keeps unparseable text as a schedule note.
+"""
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
 
+# UAlberta uses single-letter day codes; R is Thursday and U is Sunday.
 DAY_NAMES = {
     "M": "Monday",
     "T": "Tuesday",
@@ -47,6 +55,7 @@ class Meeting:
             self.time_end,
         )
 
+# Split a day string into letters, returning any code we do not recognise.
 def expand_day_codes(raw: str) -> tuple[list[str], list[str]]:
     codes: list[str] = []
     unknown: list[str] = []
@@ -84,6 +93,8 @@ class CellResult:
     schedule_note: str | None
     flags: list[str]
 
+# Walk the date/time columns in order, pairing each date with the time that
+# follows it into one meeting. Anything that does not pair becomes a note.
 def parse_class_times(cols: list[tuple[str, str]], raw_cell_text: str) -> CellResult:
     meetings: list[Meeting] = []
     flags: list[str] = []
@@ -125,6 +136,7 @@ def parse_class_times(cols: list[tuple[str, str]], raw_cell_text: str) -> CellRe
             flags.append(f"unknown-col-kind:{kind!r}")
             i += 1
 
+    # Drop duplicate meeting rows that repeat the same date, days and time.
     seen: set[tuple] = set()
     deduped: list[Meeting] = []
     for mtg in meetings:
@@ -134,6 +146,7 @@ def parse_class_times(cols: list[tuple[str, str]], raw_cell_text: str) -> CellRe
         seen.add(k)
         deduped.append(mtg)
 
+    # If nothing parsed, keep the raw text so the section is not silently empty.
     schedule_note: str | None = None
     if not deduped:
 

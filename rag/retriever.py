@@ -1,3 +1,7 @@
+"""
+Encodes a query with the index's embedder and returns the top-k spans.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

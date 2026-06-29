@@ -1,3 +1,9 @@
+"""
+Renders the eval results into EVAL_REPORT.md plus CSV and Pareto plots.
+
+Pure formatting over the harness output, so it regenerates offline with no API cost.
+"""
+
 from __future__ import annotations
 
 import csv
@@ -24,6 +30,7 @@ def _results_csv(out: dict) -> None:
                         a["cost_usd_total"], a["latency_p50"], a["latency_p95"],
                         a["cache_hit_rate"]])
 
+# Plots are optional; skip them quietly if matplotlib is not installed.
 def _pareto(out: dict) -> list[str]:
     try:
         import matplotlib
@@ -96,6 +103,7 @@ def write_report(out: dict, drift: dict | None = None) -> Path:
     _results_csv(out)
     plots = _pareto(out)
 
+    # Loudly mark stub runs so illustrative numbers are never read as real metrics.
     stub_banner = ""
     if meta["is_stub"]:
         stub_banner = (

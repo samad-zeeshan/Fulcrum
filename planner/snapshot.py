@@ -1,3 +1,10 @@
+"""
+Frozen view of term offerings used by the engine and the eval.
+
+Indexes each course's terms and seasons so availability checks are exact when
+the term is known and season-based otherwise.
+"""
+
 from __future__ import annotations
 
 import json
@@ -7,6 +14,7 @@ from pathlib import Path
 
 _SEASON_RANK = {"Winter": 0, "Spring": 1, "Summer": 2, "Fall": 3}
 
+# Sort key for terms: year then season rank. Unparseable terms sort last.
 def parse_term(term: str) -> tuple[int, int, str]:
     m = re.match(r"^(Fall|Winter|Spring|Summer)\s+Term\s+(\d{4})", term.strip())
     if not m:
@@ -67,6 +75,7 @@ class Snapshot:
         c = self.courses.get(course)
         return bool(c and season in c.seasons)
 
+    # Pattern match by subject and level, e.g. any 300-level CMPUT course.
     def matches_pattern(self, course: str, pattern: dict) -> bool:
         c = self.courses.get(course)
         if c is None:

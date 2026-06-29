@@ -1,3 +1,7 @@
+"""
+CAG path: answer rules questions from the cached rules slice, citing clause ids.
+"""
+
 from __future__ import annotations
 
 import re
@@ -8,6 +12,8 @@ from planner.gold import Gold
 
 from .rules_slice import RulesSlice, build_rules_slice
 
+# Appended after the rules slice: answer only from those rules and cite a
+# [clause-id] for every claim.
 SYSTEM_SUFFIX = (
     "\n\nYou are a University of Alberta Computing Science requirements assistant. "
     "Answer ONLY from the requirement rules above. Cite the [clause-id] (e.g. "
@@ -61,5 +67,6 @@ def answer_rules_query(query: str, ctx: CagContext,
     return CagAnswer(query=query, text=resp.text,
                      cited_clauses=_extract_clauses(resp.text), response=resp)
 
+# Prime DeepSeek's prompt cache with the rules prefix before metrics are taken.
 def warm_cache(ctx: CagContext, provider: LLMProvider, n: int = 3) -> list[LLMResponse]:
     return [provider.complete(ctx.system, "Reply READY.") for _ in range(n)]

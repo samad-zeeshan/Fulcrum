@@ -1,3 +1,10 @@
+"""
+Builds retrieval spans from a snapshot.
+
+One span per course plus one per (course, term) offering, each carrying the
+facts a citation audit can later check against.
+"""
+
 from __future__ import annotations
 
 import json
@@ -19,7 +26,8 @@ class Span:
 
     def __post_init__(self):
         if self.embed_text is None:
-
+            # Repeat the course code so the lexical retriever weights it; exact
+            # codes matter more than the surrounding prose on this corpus.
             self.embed_text = f"{self.course} {self.course} {self.text}"
 
 def _fmt_meeting(m: dict) -> str:
@@ -47,6 +55,7 @@ def build_spans(snapshot: dict, subjects: set[str] | None = None) -> list[Span]:
                                  "level": c.get("level"), "title": title,
                                  "prereq_raw": c.get("prereq_raw")}))
 
+        # A separate span per term so an offering question retrieves the right term.
         by_term: dict[str, list[dict]] = {}
         for s in c.get("sections", []):
             by_term.setdefault(s.get("term"), []).append(s)

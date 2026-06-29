@@ -1,3 +1,10 @@
+"""
+Three-way eval harness: runs RAG-always, CAG-always and Routed over the gold queries.
+
+Grades each answer deterministically and writes per-query logs plus aggregate
+quality, cost and latency.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -35,9 +42,11 @@ def run_eval(snapshot_path=DEFAULT_SNAPSHOT, provider=None, embedder_kind="hashi
         queries = queries[:limit]
 
     cfgs = EvalConfigs(snapshot_path, provider=provider, embedder_kind=embedder_kind, gold=gold)
+    # Warm the cache before measuring so cost and latency reflect steady state.
     if provider.name == "deepseek":
         cfgs.warm(n=warm)
 
+    # Precompute the gold verdict for every query from the engine/snapshot oracle.
     golds = {q["id"]: compute_gold(q, gold, snap) for q in queries}
 
     LOGS.mkdir(parents=True, exist_ok=True)
@@ -48,6 +57,7 @@ def run_eval(snapshot_path=DEFAULT_SNAPSHOT, provider=None, embedder_kind="hashi
         for q in queries:
             bundle = fn(q["text"])
             qg = golds[q["id"]]
+            # A grader crash scores zero rather than killing the whole sweep.
             try:
                 gr = grade(q, qg, bundle.text, snap_dict, gold, snap,
                            cited_clauses=bundle.cited_clauses)

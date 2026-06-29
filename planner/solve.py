@@ -1,3 +1,10 @@
+"""
+Builds an optimal term-by-term plan from the courses a student has taken.
+
+A CP-SAT model that schedules remaining courses into future terms, respecting
+prereqs, offerings and term load, and minimising terms to graduate.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -21,9 +28,11 @@ class SolveResult:
     def __bool__(self) -> bool:
         return self.found
 
+# CP-SAT is integer-only; scale units by 10 so half-credits stay exact.
 def _u10(x: float) -> int:
     return int(round(x * 10))
 
+# The horizon of future terms to schedule into, cycling through the seasons.
 def _future_terms(snap: Snapshot, cfg: EngineConfig) -> list[tuple[str, str]]:
     seasons = list(cfg.planning_seasons)
     out: list[tuple[str, str]] = []
@@ -62,6 +71,8 @@ def solve(
 
     model = cp_model.CpModel()
 
+    # take[c]: is the course taken at all. place[(c,k)]: taken in term k.
+    # term[c]: the term index a taken course lands in.
     take = {c: model.NewBoolVar(f"take[{c}]") for c in schedulable}
     place = {}
     term = {}
@@ -117,6 +128,9 @@ def solve(
     TRUE = model.NewConstant(1)
     FALSE = model.NewConstant(0)
 
+    # Turn a single prereq course into a Boolean that also forces ordering:
+    # strict means it must land in an earlier term, non-strict allows the same
+    # term (coreqs). This is how prereq timing is baked into the model.
     def leaf_literal(course_code: str, tc, strict: bool):
         if course_code in taken:
             return TRUE
@@ -200,12 +214,15 @@ def solve(
         if entry.coreq is not None:
             enforce(c, expr_literal(entry.coreq, tc, strict=False))
 
+    # Minimise terms to graduate first (the big weight on makespan), then break
+    # ties by taking fewer courses.
     makespan = model.NewIntVar(0, H - 1, "makespan")
     for c in schedulable:
         model.Add(makespan >= term[c]).OnlyEnforceIf(take[c])
     total_take = sum(take.values())
     model.Minimize(makespan * 1000 + total_take)
 
+    # Fixed seed and one worker keep the chosen plan reproducible run to run.
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = cfg.solver_max_seconds
     solver.parameters.random_seed = cfg.random_seed

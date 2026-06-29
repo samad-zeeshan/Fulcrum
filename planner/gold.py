@@ -1,3 +1,9 @@
+"""
+Loads the gold answer key: program rules, conditionals, exclusions and prereqs.
+
+This is the source of truth the eval grades against and the engine validates with.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -105,6 +111,7 @@ class Gold:
     def bridge_courses(self) -> set[str]:
         return {c for c, e in self.prerequisites.items() if e.bridge}
 
+    # The course set graded plans may draw from: named core plus bridge electives.
     def eval_scope(self) -> set[str]:
         return self.named_courses() | self.bridge_courses()
 

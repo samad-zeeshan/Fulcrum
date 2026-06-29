@@ -1,3 +1,7 @@
+"""
+RAG path: retrieve offering spans and answer the question from them.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -6,6 +10,7 @@ from llm.provider import LLMProvider, LLMResponse, StubProvider
 
 from .retriever import Retrieved, Retriever
 
+# Answer only from the retrieved context and cite span ids, so replies stay grounded.
 SYSTEM = (
     "You are a University of Alberta course-offerings assistant. Answer ONLY using "
     "the provided context lines, each tagged with a [span-id]. If the context does "

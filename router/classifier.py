@@ -1,3 +1,10 @@
+"""
+Interpretable query router: keyword scores decide rag, cag or compound.
+
+No model and no planner import, so the routing decision stays explainable and
+the spine rule R2 (router never touches the engine) holds.
+"""
+
 from __future__ import annotations
 
 import re
@@ -45,10 +52,11 @@ def classify(query: str, compound_margin: int = 1) -> RouteDecision:
     chits = [kw for kw in CONSTRUCTION_TERMS if kw in query.lower()]
     feats = {"offering_hits": ohits, "rules_hits": rhits, "construction_hits": chits}
 
+    # An explicit "build me a plan" ask always needs both paths.
     if chits:
-
         return RouteDecision(route="compound", offering_score=o, rules_score=r, features=feats)
 
+    # Both sides score and are close: treat it as compound rather than guess one.
     if o > 0 and r > 0 and abs(o - r) <= compound_margin:
         route = "compound"
     elif o > r:

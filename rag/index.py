@@ -1,3 +1,7 @@
+"""
+FAISS index over span vectors, with build, save and load.
+"""
+
 from __future__ import annotations
 
 import json
@@ -27,6 +31,7 @@ class RagIndex:
         return SentenceTransformerEmbedder(self.embedder_name)
 
     def _build_faiss(self):
+        # Inner-product index; vectors are L2-normalised so this is cosine similarity.
         import faiss
         index = faiss.IndexFlatIP(self.vectors.shape[1])
         index.add(self.vectors)
@@ -39,6 +44,7 @@ class RagIndex:
         spans = build_spans(snap, subjects=subjects)
         embedder = embedder or get_embedder("auto")
         texts = [s.embed_text for s in spans]
+        # Fit idf on the corpus before encoding so rare terms carry more weight.
         if hasattr(embedder, "fit_idf"):
             embedder.fit_idf(texts)
         vectors = embedder.encode(texts)

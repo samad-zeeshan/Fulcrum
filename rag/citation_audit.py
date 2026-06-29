@@ -1,3 +1,9 @@
+"""
+Checks an offering answer only cites terms and times that exist in the snapshot.
+
+A cheap guard against the model inventing schedule facts.
+"""
+
 from __future__ import annotations
 
 import re
@@ -33,6 +39,7 @@ def audit_offering_answer(answer: str, snapshot: dict,
     for subj, num in COURSE_RE.findall(answer):
         mentioned.append(f"{subj} {num}")
     mentioned = [c for c in dict.fromkeys(mentioned) if _course_facts(snapshot, c)]
+    # Nothing to audit if the answer names no course we have facts for.
     if not mentioned:
         return CitationAudit(ok=True)
 
@@ -46,6 +53,7 @@ def audit_offering_answer(answer: str, snapshot: dict,
         valid_terms |= set(c.get("terms") or [])
         valid_times |= {_norm_time(t) for t in _course_times(c)}
 
+    # Flag any cited term or time that the snapshot does not back for these courses.
     for t in terms_in_answer:
         if t not in valid_terms:
             violations.append(f"answer cites term '{t}' not offered for {mentioned} in snapshot")

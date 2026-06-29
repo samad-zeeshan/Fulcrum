@@ -1,14 +1,21 @@
+"""
+
+Matches a student's creditable courses to degree requirement slots.
+
+Solved as one global min-shortfall assignment (CP-SAT) so a course can only
+satisfy one requirement — never the per-group tally that double-counts.
+"""
+
 from __future__ import annotations
-
 from dataclasses import dataclass
-
 from ortools.sat.python import cp_model
-
 from .config import EngineConfig
 from .gold import Gold
 from .requirements import Requirements, Slot, units_of
 from .snapshot import Snapshot
 
+
+# CP-SAT is integer-only so scale units by 10 so half-credits (1.5, 3.0) stay exact.
 def _u10(x: float) -> int:
     return int(round(x * 10))
 
@@ -47,6 +54,8 @@ def match_requirements(
             if s.eligible(c, snap):
                 x[(c, s.id)] = model.NewBoolVar(f"x[{c}|{s.id}]")
 
+    # Each course feeds at most one slot so the no-double-counting rule that makes
+    # this a matching, not a per-group tally.
     for c in courses:
         vars_c = [x[(c, s.id)] for s in slots if (c, s.id) in x]
         if vars_c:
@@ -55,7 +64,7 @@ def match_requirements(
     short: dict[str, cp_model.IntVar] = {}
     for s in slots:
         members = [x[(c, s.id)] for c in courses if (c, s.id) in x]
-        if s.kind == "exactly_one":
+        if s.kind == "exactly_one":  # "picks exactly one course" slot: short by 1 if nothing fills it.
             filled = sum(members) if members else 0
             if members:
                 model.Add(sum(members) <= 1)
@@ -71,6 +80,9 @@ def match_requirements(
 
     model.Minimize(sum(short.values()))
 
+
+    # Fixed seed + one worker means reproducible assignment. Multi-worker search can
+    # return different equally-optimal results and means the eval oracle needs stable output.
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = cfg.solver_max_seconds
     solver.parameters.random_seed = cfg.random_seed
@@ -90,5 +102,5 @@ def match_requirements(
             earned_units=earned_units, shortfall_units=sh_units, assigned=assigned,
         ))
 
-    satisfied = solver.ObjectiveValue() < 1e-6
+    satisfied = solver.ObjectiveValue() < 1e-6  # Zero total shortfall means every requirement met
     return MatchResult(satisfied=satisfied, slots=results)

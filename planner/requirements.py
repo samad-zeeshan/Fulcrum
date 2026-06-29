@@ -1,3 +1,10 @@
+"""
+Expands the gold groups into matching slots and applies conditionals.
+
+A slot is one unit of requirement the matcher fills: an all_of group becomes one
+exactly-one slot per member, a units_from group becomes a single units slot.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -63,6 +70,8 @@ def build_requirements(gold: Gold, taken_or_earned: set[str]) -> Requirements:
     ineligible: set[str] = set()
     applied: list[str] = []
 
+    # Conditionals can mark a course ineligible or rewrite a group's options
+    # depending on what the student has taken, before any matching happens.
     for cond in gold.conditionals:
         trigger = cond.when.get("taken")
         if trigger and trigger in taken_or_earned:
@@ -88,6 +97,8 @@ def build_requirements(gold: Gold, taken_or_earned: set[str]) -> Requirements:
     slots = [s for group_slots in base.values() for s in group_slots]
     return Requirements(slots=slots, ineligible=frozenset(ineligible), applied_conditionals=applied)
 
+# Every course the program could credit: named courses, group options and any
+# course matching a group's pattern.
 def program_courses(gold: Gold, snap: Snapshot) -> set[str]:
     out: set[str] = set(gold.named_courses())
     for g in gold.groups:

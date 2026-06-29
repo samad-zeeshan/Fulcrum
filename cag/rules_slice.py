@@ -1,3 +1,10 @@
+"""
+Builds the stable rules text the CAG path caches and answers from.
+
+Flattens the gold program into clause-tagged lines ([group:...], [prereq:...])
+so an answer can cite a specific clause.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -45,6 +52,8 @@ class RulesSlice:
     def __len__(self) -> int:
         return len(self.text)
 
+# Render gold into one stable text block: the cacheable prefix the CAG prompt
+# reuses, with every clause tagged by id so answers can cite it.
 def build_rules_slice(gold: Gold) -> RulesSlice:
     p = gold.program
     lines: list[str] = []
@@ -88,6 +97,7 @@ def build_rules_slice(gold: Gold) -> RulesSlice:
         lines.append(line)
 
     text = "\n".join(lines)
+    # The set of clause ids an answer is allowed to cite.
     clause_ids = {f"group:{g.id}" for g in gold.groups}
     clause_ids |= {f"note:{c.id}" for c in gold.conditionals}
     clause_ids |= {f"prereq:{c}" for c in gold.prerequisites}

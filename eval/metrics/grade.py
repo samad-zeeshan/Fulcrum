@@ -1,3 +1,10 @@
+"""
+Deterministic grader for the eval harness.
+
+Scores each answer against the gold with no LLM in the loop, so the same answer
+always gets the same grade.
+"""
+
 from __future__ import annotations
 
 import re
@@ -12,12 +19,14 @@ from planner.expr import EvalContext, evaluate
 from rag.citation_audit import audit_offering_answer
 from .gold import QueryGold
 
+# Cheap keyword polarity for yes/no and valid/invalid answers.
 _NEG = ("not offered", "isn't offered", "is not offered", "not available", "unavailable",
         "no longer", "not scheduled", "not being offered", "no, ", "no.", "not run")
 _POS = ("is offered", "yes", "offered in", "available", "runs", "is scheduled", "is being offered")
 _INVALID = ("invalid", "not valid", "isn't valid", "does not satisfy", "doesn't satisfy",
             "fails", "not complete", "incomplete", "violat")
 _VALID = ("valid", "satisfies", "meets all", "is complete", "fulfills", "fulfil")
+# Pulls course codes like "CMPUT 174" out of free text.
 COURSE_RE = re.compile(r"\b([A-Z]{2,5})\s?(\d{3})\b")
 
 @dataclass
@@ -53,6 +62,7 @@ _CYCLE = ("Fall", "Winter")
 def _has_season(label: str) -> bool:
     return any(sn in label for sn in _SEASONS)
 
+# LLMs return loosely shaped plan YAML, so normalise it before the engine sees it.
 def _sanitise_plan_data(data: dict) -> dict:
     terms = []
     for i, t in enumerate(data.get("terms") or []):
@@ -111,6 +121,8 @@ def grade(query: dict, qg: QueryGold, answer_text: str, snapshot_dict: dict,
         if prereq is None:
             quality = 1.0 if not ans_codes else 0.5
         else:
+            # Partial credit: score the fraction of required clauses the answer
+            # covers, with one_of groups handled by the expression evaluator.
             conjuncts = prereq["all_of"] if isinstance(prereq, dict) and "all_of" in prereq else [prereq]
             sat = sum(1.0 for c in conjuncts if evaluate(c, ctx))
             quality = sat / len(conjuncts)
@@ -125,6 +137,8 @@ def grade(query: dict, qg: QueryGold, answer_text: str, snapshot_dict: dict,
                      {"pred": pred, "gold": qg.data["valid"]})
 
     if t == "plan_construction":
+        # The real grounding check: run the model's plan through the engine and
+        # score it valid or not. This is where plan_construction tends to be 0.
         plan = extract_plan(answer_text)
         if plan is None:
             return Grade(query["id"], t, 0.0, True, {"parsed": False})

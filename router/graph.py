@@ -1,3 +1,7 @@
+"""
+LangGraph wiring of the router: classify, then branch to rag, cag or compound.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -69,7 +73,7 @@ class Router:
         return {"cag": a, "answer": a.text}
 
     def _compound(self, s: _State) -> _State:
-
+        # Run both paths and stitch the rules and offerings answers together.
         cag = answer_rules_query(s["query"], self.cag_ctx, self.provider)
         rag = answer_offering_query(s["query"], self.retriever, self.provider, k=self.k)
         combined = f"Rules: {cag.text}\nOfferings: {rag.text}"
@@ -82,6 +86,7 @@ class Router:
         g.add_node("cag", self._cag)
         g.add_node("compound", self._compound)
         g.set_entry_point("classify")
+        # Branch on the classifier's chosen route.
         g.add_conditional_edges("classify", lambda s: s["decision"].route,
                                 {"rag": "rag", "cag": "cag", "compound": "compound"})
         for n in ("rag", "cag", "compound"):
