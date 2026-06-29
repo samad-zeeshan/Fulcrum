@@ -31566,7 +31566,7 @@
         },
         {
           "capacity": 60,
-          "class_id": "SYN37841",
+          "class_id": "SYN19237",
           "component": "LECTURE",
           "meetings": [
             {
@@ -69381,7 +69381,7 @@
       "time_start": "11:00"
     }
   ],
-  "snapshot_date": "2026-07-14",
+  "snapshot_date": "synthetic_demo",
   "source": "SYNTHETIC drift of offerings.json (seed 20260714); 4 explicit changes + 1060 capacity nudges. NOT a real re-scrape — replace before sharing for the strongest freshness claim.",
   "synthetic": true,
   "term_order": [

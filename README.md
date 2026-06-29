@@ -97,8 +97,10 @@ aware of:
   courses) are not enforced, so feasibility along those paths is only partial.
 - Graded plans draw from a fixed set of 31 courses, the named core plus a small set
   of hand checked electives, not the whole catalogue.
-- The second snapshot used for the freshness check is synthetic. A real re-scrape
-  would make that claim stronger.
+- The freshness check is demonstrated against a synthetically perturbed snapshot,
+  because the catalogue is stable between scrapes over short spans. A real second
+  snapshot will come from a re-scrape at the Fall 2026 registration window, when
+  seats and sections actually move.
 - The full prerequisite parser is deferred. The engine currently relies on a small
   set of hand verified prerequisite entries instead.
 

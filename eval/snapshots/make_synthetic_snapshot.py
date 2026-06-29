@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import random
 from pathlib import Path
@@ -53,7 +54,7 @@ def _apply_drift(courses: dict, manifest_out: list) -> None:
                 c["terms"].append(d["term"])
             c["sections"].append({
                 "term": d["term"], "component": d["component"], "section": "A1",
-                "class_id": f"SYN{abs(hash(d['course'])) % 90000 + 10000}", "capacity": d["capacity"],
+                "class_id": f"SYN{int(hashlib.sha1(d['course'].encode()).hexdigest(), 16) % 90000 + 10000}", "capacity": d["capacity"],
                 "meetings": [{"days": d["days"], "time_start": d["time_start"],
                               "time_end": d["time_end"], "date_start": None, "date_end": None}],
             })
@@ -74,7 +75,7 @@ def _registration_decay(courses: dict, rng: random.Random) -> int:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--from", dest="src", type=Path, default=SNAP1)
-    ap.add_argument("--date", default="2026-07-14", help="synthetic snapshot date")
+    ap.add_argument("--name", default="synthetic_demo", help="output subdirectory name")
     ap.add_argument("--seed", type=int, default=20260714)
     args = ap.parse_args()
 
@@ -86,7 +87,7 @@ def main() -> None:
     _apply_drift(snap["courses"], manifest)
     decayed = _registration_decay(snap["courses"], rng)
 
-    snap["snapshot_date"] = args.date
+    snap["snapshot_date"] = args.name
     snap["synthetic"] = True
     snap["derived_from"] = args.src.relative_to(REPO).as_posix()
     snap["source"] = (f"SYNTHETIC drift of {args.src.name} (seed {args.seed}); "
@@ -94,7 +95,7 @@ def main() -> None:
                       "NOT a real re-scrape — replace before sharing for the strongest freshness claim.")
     snap["drift_manifest"] = manifest
 
-    out = REPO / "eval" / "snapshots" / args.date / "offerings.json"
+    out = REPO / "eval" / "snapshots" / args.name / "offerings.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(snap, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"wrote {out}  (synthetic; {len(manifest)} explicit drifts, {decayed} capacity nudges)")

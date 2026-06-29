@@ -15,7 +15,7 @@ from router.classifier import classify
 
 REPO = Path(__file__).resolve().parents[2]
 SNAP1 = REPO / "eval" / "snapshots" / "2026-06-28" / "offerings.json"
-SNAP2 = REPO / "eval" / "snapshots" / "2026-07-14" / "offerings.json"
+SNAP2 = REPO / "eval" / "snapshots" / "synthetic_demo" / "offerings.json"
 
 PARAPHRASES = {
     "When is CMPUT 174 offered?": [

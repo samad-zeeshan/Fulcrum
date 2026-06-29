@@ -14,7 +14,7 @@ from rag.embedder import HashingEmbedder
 
 ROOT = Path(__file__).resolve().parents[1]
 SNAP1 = ROOT / "eval" / "snapshots" / "2026-06-28" / "offerings.json"
-SNAP2 = ROOT / "eval" / "snapshots" / "2026-07-14" / "offerings.json"
+SNAP2 = ROOT / "eval" / "snapshots" / "synthetic_demo" / "offerings.json"
 
 @pytest.fixture(scope="module")
 def index() -> RagIndex:
