@@ -7,10 +7,10 @@ and is built to extend to the rest of the programs in the catalogue.
 It has two parts. The first is retrieval. A RAG and CAG setup answers questions
 about course offerings and program rules, and an evaluation harness scores the
 answers on quality, cost, and latency against a gold answer key. The second part
-is a constraint engine that validates and builds degree plans. The engine is not
-the headline. It is the thing the evaluation grades against, so that a question
-like "is this plan valid" has a real answer instead of whatever the model happens
-to say.
+is a constraint engine that validates degree plans and solves for a shortest one.
+The engine is not the headline. It is the thing the evaluation grades against, so
+that a question like "is this plan valid" has a real answer instead of whatever
+the model happens to say.
 
 The scope right now is the CS Major for the 2026-2027 catalog year.
 
@@ -76,11 +76,11 @@ which are about live data. CAG handles rules questions, which are about fixed
 requirements. The router picks the better of the two for each question, so the
 routed setup ends up ahead of either one on its own.
 
-One result worth calling out is that no configuration does well at building a full
-plan from scratch. The model writes plans that the engine then rejects, usually
-because a course is scheduled in a term it is not offered in, or a credit exclusion
-is broken. That is the case for the constraint engine in one line. The engine is
-the planner, not the model.
+One result worth calling out is that the model is poor at producing a valid plan
+on its own. It writes plans that the engine then rejects, usually because a course
+is scheduled in a term it is not offered in, or a credit exclusion is broken. That
+is the case for the constraint engine in one line. The engine is the planner, not
+the model.
 
 A side note on retrieval: the default embedder is a plain TF-IDF hashing vector,
 not a dense model. On a corpus full of exact course codes the lexical version
@@ -97,6 +97,11 @@ aware of:
   courses) are not enforced, so feasibility along those paths is only partial.
 - Graded plans draw from a fixed set of 31 courses, the named core plus a small set
   of hand checked electives, not the whole catalogue.
+- The evaluation indexes only three subjects (CMPUT, MATH, STAT) by default, since
+  the gold query set covers CS-degree questions where those are the relevant
+  departments. The retriever builds over whatever subjects it is given, so the
+  other scraped subjects can be included by widening that setting, but the shipped
+  eval numbers reflect the three-subject index.
 - The freshness check is demonstrated against a synthetically perturbed snapshot,
   because the catalogue is stable between scrapes over short spans. A real second
   snapshot will come from a re-scrape at the Fall 2026 registration window, when
