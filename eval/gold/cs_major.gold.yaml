@@ -1,0 +1,372 @@
+# cs_major.gold.yaml — FINISHED answer key for the Computing Science Major.
+#
+# Single source, single catalog year (the SCRAPE):
+#   • Requirement groups: programs.jsonl, "Major in Computing Science Requirements" (blocks 45-55),
+#     live calendar catoid=69, fetched 2026-06-28.
+#     [REBUILT from the live calendar after the original Aug 7/24 worksheet was found to DISAGREE with it:
+#      senior core restructured (204+272 now mandatory), senior STAT {252,266} dropped, 300/400 pool 18u -> 15u.]
+#   • Prerequisites / coreqs / credit-exclusions: courses.jsonl, fetched 2026-06-28. Every prereq carries
+#     its verbatim `source:` string; nothing came from model memory.
+#
+# Resolved pieces:
+#   (1) Note 1(b) conditional  -> see `conditionals:` (BROAD reading, rationale inline).
+#   (2) `prerequisites:` DAG    -> filled from prereq_raw, hand-verified, with sources.
+#   (3) catalog_year LOCKED to 2026-2027 (directive3 G1, see program.catalog_year).
+#   (4) CMPUT 300 prose reading LOCKED (directive3 G1, see its prerequisites entry).
+#   (5) ELECTIVE BRIDGE added (directive3 G2): prereqs for 10 real 300/400-level CMPUT
+#       electives, hand-verified from courses.jsonl prereq_raw with verbatim sources, so
+#       the pattern pools can be filled by real courses in the graded eval. Marked
+#       `bridge: true`. The eval's plans draw ONLY from {21 named core + this bridge}.
+
+program:
+  id: cmput-major
+  name: Computing Science Major
+  catalog_year: "2026-2027"   # LOCKED (directive3 G1). Confirmed against the live calendar:
+                       #   catoid=69 hosts "Dates and Deadlines from Fall 2026/Winter 2027 Terms" and
+                       #   "Spring/Summer 2027 Terms" -> the 2026-2027 academic year, matching the
+                       #   2026-06-28 scrape's terms. Do NOT restore 2024 (worksheet) — it no longer
+                       #   matches the groups, and the prereqs are from the 2026-06-28 live scrape.
+  total_units: 54
+  scope: "major-requirements + prerequisite-feasibility"   # NOT the full ~120u BSc; excludes Faculty of Science breadth
+
+# --- CONVENTIONS: leaf/expression vocabulary used throughout this file ------------------------------
+# A boolean expression is one of:
+#   • a bare course code string ............... "CMPUT 174"          (satisfied iff that course is taken)
+#   • { one_of: [expr, ...] } ................. logical OR  ("one of" / "or")
+#   • { all_of: [expr, ...] } ................. logical AND ("and" / "; and")
+#   • { hs: "Mathematics 30-1" } .............. a HIGH-SCHOOL prerequisite. Admission-level: the
+#                                               feasibility engine treats hs:* as satisfied-by-admission
+#                                               (every admitted student has these). Recorded for fidelity.
+#   • { pattern: {subject?: SUBJ, level_in: [..]} } .. matches any course meeting the pattern
+#                                               (used where the calendar says "any 300-level CMPUT course").
+# Course codes that appear only inside prerequisites (e.g. SCI 100, ENCMP 100, CMPUT 191, STAT 161,
+# MATH 209) are external alternatives quoted verbatim from the calendar; they are NOT program courses
+# and intentionally have no entry in `courses:`.
+# OPEN (unresolved): are external prereqs (MATH 100/101/209/214/217 ...) ENFORCED (student must hold them)
+#   or ASSUMED satisfiable? This changes what "prerequisite feasibility" checks on the STAT path. Decide.
+conventions:
+  hs_satisfied_by_admission: true
+  external_prereq_alternatives_allowed: true
+
+# --- COURSE TABLE: explicitly-named courses + unit values -----------------------------------------
+# Units VERIFIED against courses.jsonl `credits` — all 3.0 (see verification block).
+# The 15u/6u senior groups are PATTERNS (match by level), so qualifying 300/400-level CMPUT courses
+# are NOT enumerated here — the engine evaluates those against the full CMPUT list from the scrape.
+courses:
+  CMPUT 174: { units: 3 }
+  CMPUT 175: { units: 3 }
+  CMPUT 274: { units: 3 }     # Note 1(a) alternative to 174
+  CMPUT 275: { units: 3 }     # Note 1(a) alternative to 175
+  CMPUT 200: { units: 3 }
+  CMPUT 201: { units: 3 }
+  CMPUT 204: { units: 3 }
+  CMPUT 229: { units: 3 }
+  CMPUT 272: { units: 3 }
+  CMPUT 291: { units: 3 }
+  CMPUT 300: { units: 3 }
+  MATH 125:  { units: 3 }
+  MATH 134:  { units: 3 }
+  MATH 136:  { units: 3 }
+  MATH 144:  { units: 3 }
+  MATH 146:  { units: 3 }
+  MATH 154:  { units: 3 }
+  MATH 156:  { units: 3 }
+  STAT 151:  { units: 3 }
+  STAT 235:  { units: 3 }
+  STAT 265:  { units: 3 }
+  # STAT 252 / STAT 266 removed: senior_stat_2 was their only home and the live major has no senior STAT requirement.
+
+# --- REQUIREMENT GROUPS (from programs.jsonl blocks 45-55, verified line by line) -----------------
+groups:
+
+  - id: foundation_core
+    type: all_of
+    members:
+      - one_of: [CMPUT 174, CMPUT 274]    # Note 1(a)
+      - one_of: [CMPUT 175, CMPUT 275]    # Note 1(a)
+      - MATH 125
+
+  - id: foundation_calc_1
+    type: units_from
+    units_required: 3
+    options: [MATH 134, MATH 144, MATH 154]
+
+  - id: foundation_calc_2
+    type: units_from
+    units_required: 3
+    options: [MATH 136, MATH 146, MATH 156]
+
+  - id: foundation_stat
+    type: units_from
+    units_required: 3
+    options: [STAT 151, STAT 235, STAT 265]
+
+  - id: senior_required                 # live calendar makes these MANDATORY (programs.jsonl block 50)
+    type: all_of
+    members: [CMPUT 204, CMPUT 272]
+
+  - id: senior_choice                   # was senior_core; live option set is {201,229,291} (block 51)
+    type: units_from
+    units_required: 6
+    options: [CMPUT 201, CMPUT 229, CMPUT 291]
+    # Note 1(b) rewrites this group when CMPUT 275 is taken — see conditionals.
+
+  - id: senior_ethics
+    type: units_from
+    units_required: 3
+    options: [CMPUT 200, CMPUT 300]
+
+  # (senior_stat_2 REMOVED — the live plain CS Major, blocks 45-55, has NO senior STAT requirement.)
+
+  - id: senior_cmput_300_400
+    type: units_from_pattern
+    units_required: 15                  # block 53: "15 units from any 300- and 400-level CMPUT course"
+    pattern: { subject: CMPUT, level_in: [300, 400] }
+
+  - id: senior_cmput_400
+    type: units_from_pattern
+    units_required: 6
+    pattern: { subject: CMPUT, level_in: [400] }
+    # Additive. Total: foundation 18 + senior (6+6+3+15+6 = 36) = 54 (verified). Distinctness via global matching.
+
+# --- CONDITIONALS --------------------------------------------------------------------------------
+conditionals:
+  - id: note1_275_blocks_201
+    when: { taken: CMPUT 275 }
+    effects:
+      - ineligible: CMPUT 201
+      - modify_group:
+          id: senior_choice
+          set_options: [CMPUT 229, CMPUT 291]
+          add_pattern: { subject: CMPUT, level_gte: 200 }
+    # DECISION: BROAD reading (replacement = any CMPUT >= 200), per live Note (block 55), whose wording is
+    #   identical to the worksheet. 204/272 are unaffected — they are mandatory (senior_required).
+
+# --- CREDIT EXCLUSIONS (antirequisites) ----------------------------------------------------------
+# Mutually-exclusive credit sets, transcribed verbatim from credit_exclusion_raw in the scrape.
+# Load-bearing for feasibility: a plan may claim credit for AT MOST ONE course from each set.
+# NOTE: CMPUT 174's exclusion is decomposed into the PAIRS it actually asserts (174-vs-each). Modeling it
+#   as a single 4-way set {174,274,275,ENCMP100} was wrong — it forbade 274+275 together, but 275's prereq
+#   IS 274, so it rejected every valid honors-stream plan.
+credit_exclusions:
+  - set: [CMPUT 174, CMPUT 274]
+    source: "Credit cannot be obtained for both CMPUT 174 and CMPUT 274."                        # CMPUT 274
+  - set: [CMPUT 174, CMPUT 275]
+    source: "Credit cannot be obtained for CMPUT 174 if credit has already been obtained for CMPUT 274, 275, or ENCMP 100, except with permission of the Department."   # CMPUT 174
+  - set: [CMPUT 174, ENCMP 100]
+    source: "Credit cannot be obtained for CMPUT 174 if credit has already been obtained for CMPUT 274, 275, or ENCMP 100, except with permission of the Department."   # CMPUT 174
+  - set: [CMPUT 175, CMPUT 275]
+    source: "Credit cannot be obtained for CMPUT 175 if one already has credit for CMPUT 275, except with permission of the Department."   # CMPUT 175 / 275
+  - set: [CMPUT 201, CMPUT 275]
+    source: "Credit cannot be obtained for both CMPUT 201 and CMPUT 275."                        # CMPUT 201
+  - set: [CMPUT 229, E E 380, ECE 212]
+    source: "Credit may be obtained in only one of CMPUT 229, E E 380 or ECE 212."               # CMPUT 229
+  - set: [CMPUT 291, BTM 415, MIS 415]
+    source: "Credit may be obtained in only one of CMPUT 291, BTM 415, or MIS 415."              # CMPUT 291 (coreq line)
+  # ([266,276] exclusion removed: STAT 266 is no longer a modeled course after senior_stat_2 was dropped.)
+  # --- bridge electives (directive3 G2) ---
+  - set: [CMPUT 301, BTM 419, MIS 419]
+    source: "Credit may be obtained in only one of CMPUT 301, BTM 419, or MIS 419."              # CMPUT 301
+  - set: [CMPUT 401, BTM 419, MIS 419]
+    source: "Credit may be obtained in only one of CMPUT 401, BTM 419, or MIS 419."              # CMPUT 401
+
+# --- PREREQUISITES (the DAG) ---------------------------------------------------------------------
+# Hand-translated from courses.jsonl `prereq_raw` / `coreq_raw` (fetched 2026-06-28).
+# `source` is the exact verbatim string; `prereq`/`coreq` are its faithful boolean encoding.
+# `confidence: needs_review` flags genuine wording ambiguities for the human pass.
+prerequisites:
+
+  CMPUT 174:
+    prereq: { one_of: [ { hs: "Mathematics 30" }, { hs: "Mathematics 30-1" }, { hs: "Mathematics 30-2" } ] }
+    source: "Math 30, 30-1, or 30-2."
+
+  CMPUT 175:
+    prereq: { one_of: [CMPUT 174, SCI 100] }
+    source: "CMPUT 174 or SCI 100."
+
+  CMPUT 274:
+    prereq: { hs: "Mathematics 30-1" }
+    source: "Math 30-1."
+
+  CMPUT 275:
+    prereq: CMPUT 274
+    source: "CMPUT 274."
+
+  CMPUT 200:
+    prereq:
+      one_of:
+        - { one_of: [CMPUT 191, CMPUT 195] }
+        - all_of:
+            - { one_of: [CMPUT 174, CMPUT 274, ENCMP 100] }
+            - { one_of: [STAT 151, STAT 161, STAT 181, STAT 235, STAT 265, SCI 151, MATH 181] }
+    source: "one of CMPUT 191 or 195; or one of CMPUT 174 or 274 or ENCMP 100, and one of STAT 151, 161, 181, 235, 265, SCI 151, or MATH 181."
+
+  CMPUT 201:
+    prereq: CMPUT 175
+    source: "CMPUT 175."
+
+  CMPUT 204:
+    prereq:
+      all_of:
+        - { one_of: [CMPUT 175, CMPUT 275] }
+        - CMPUT 272
+        - { one_of: [MATH 100, MATH 114, MATH 117, MATH 134, MATH 144, MATH 154] }
+    source: "CMPUT 175 or 275, and CMPUT 272; and one of MATH 100, 114, 117, 134, 144, or 154."
+
+  CMPUT 229:
+    prereq: { one_of: [CMPUT 201, CMPUT 275] }
+    source: "CMPUT 201 or 275. Credit may be obtained in only one of CMPUT 229, E E 380 or ECE 212."
+    # (the credit-exclusion clause is captured under credit_exclusions, not as a prereq)
+
+  CMPUT 272:
+    prereq: { one_of: [CMPUT 101, CMPUT 174, CMPUT 175, CMPUT 274, SCI 100, ENCMP 100] }
+    source: "CMPUT 101, 174, 175, 274, SCI 100, or ENCMP 100."
+
+  CMPUT 291:
+    prereq:
+      all_of:
+        - { one_of: [CMPUT 175, CMPUT 274] }
+        - CMPUT 272
+    coreq: { one_of: [CMPUT 201, CMPUT 275] }
+    source: "CMPUT 175 or 274, and 272."
+    coreq_source: "one of CMPUT 201 or 275. Credit may be obtained in only one of CMPUT 291, BTM 415, or MIS 415."
+
+  CMPUT 300:
+    prereq:
+      all_of:
+        - one_of:
+            - { pattern: { subject: CMPUT, level_in: [100] } }   # "any introductory-level Computing Science course"
+            - SCI 100
+        - { pattern: { level_in: [200] } }                       # "any 200-level course"
+    source: "Any introductory-level Computing Science course or SCI 100, and any 200-level course."
+    confidence: resolved   # LOCKED (directive3 G1)
+    review_note: >-
+      LOCKED to the literal calendar reading: "introductory-level Computing Science course" -> any
+      CMPUT 100-level course; "any 200-level course" -> any subject at the 200-level (the calendar text
+      places no subject restriction on the second clause, so neither do we). This is the faithful, not
+      the conservative, reading; it is the easier of the two to satisfy, so plans that pass it would also
+      pass a CMPUT-only restriction of the first clause. Encoded exactly as the prereq expression above.
+
+  MATH 125:
+    prereq: { hs: "Mathematics 30-1" }
+    source: "Mathematics 30-1."
+
+  MATH 134:
+    prereq: { hs: "Mathematics 30-1" }
+    source: "Mathematics 30-1."
+
+  MATH 136:
+    prereq: { one_of: [MATH 100, MATH 113, MATH 114, MATH 117, MATH 134, MATH 144, MATH 154] }
+    source: "One of MATH 100, 113, 114, 117, 134, 144 or 154."
+
+  MATH 144:
+    prereq: { hs: "Mathematics 30-1" }
+    source: "Mathematics 30-1."
+
+  MATH 146:
+    prereq: { one_of: [MATH 100, MATH 113, MATH 114, MATH 117, MATH 134, MATH 144, MATH 154] }
+    source: "One of MATH 100, 113, 114, 117, 134, 144 or 154."
+
+  MATH 154:
+    prereq: { hs: "Mathematics 30-1" }
+    source: "Mathematics 30-1."
+
+  MATH 156:
+    prereq: { one_of: [MATH 100, MATH 113, MATH 114, MATH 117, MATH 134, MATH 144, MATH 154] }
+    source: "One of MATH 100, 113, 114, 117, 134, 144 or 154."
+
+  STAT 151:
+    prereq: { one_of: [ { hs: "Mathematics 30-1" }, { hs: "Mathematics 30-2" } ] }
+    source: "Mathematics 30-1 or 30-2."
+
+  STAT 235:
+    prereq: MATH 100
+    coreq: MATH 101
+    source: "MATH 100."
+    coreq_source: "MATH 101."
+
+  STAT 265:
+    prereq: null            # no prerequisite in the calendar
+    coreq: { one_of: [MATH 209, MATH 214, MATH 217] }
+    source: null
+    coreq_source: "One of MATH 209, 214 or 217."
+
+  # --- ELECTIVE BRIDGE (directive3 G2) ----------------------------------------------------------
+  # Prerequisites for a FIXED set of 10 real CMPUT 300/400-level electives (6x 300, 4x 400), so the
+  # senior pattern pools (15u 300/400 + 6u 400 = 21 distinct units) can be filled by real courses with
+  # real, hand-verified prerequisites in the graded eval. Each entry's `source:` is the verbatim
+  # courses.jsonl `prereq_raw` (same integrity rule as the rest of the gold). `bridge: true` marks
+  # the defined scope: the eval's plans draw ONLY from {the 21 named core courses + these 10}.
+  # Chosen so every prereq is satisfiable from {core + bridge}: 401/402 chain on 301; 455/461 take any
+  # 300-level (supplied by the other bridge 300s); the rest chain on core 201/204/272/275.
+
+  CMPUT 301:
+    prereq: { one_of: [CMPUT 201, CMPUT 275] }
+    source: "CMPUT 201 or CMPUT 275. Credit may be obtained in only one of CMPUT 301, BTM 419, or MIS 419."
+    bridge: true
+    # (the credit-exclusion clause is captured under credit_exclusions, not as a prereq)
+
+  CMPUT 303:
+    prereq: { all_of: [ { one_of: [CMPUT 201, CMPUT 275] }, CMPUT 204 ] }
+    source: "CMPUT 201 or 275, and 204."
+    bridge: true
+
+  CMPUT 331:
+    prereq: { all_of: [ { one_of: [CMPUT 201, CMPUT 275] }, CMPUT 272 ] }
+    source: "CMPUT 201 or 275, and CMPUT 272."
+    bridge: true
+
+  CMPUT 333:
+    prereq: { one_of: [CMPUT 201, CMPUT 275] }
+    source: "CMPUT 201 or 275."
+    bridge: true
+
+  CMPUT 350:
+    prereq: { all_of: [ { one_of: [CMPUT 201, CMPUT 275] }, CMPUT 204 ] }
+    source: "CMPUT 201 or CMPUT 275, and CMPUT 204."
+    bridge: true
+
+  CMPUT 355:
+    prereq: { pattern: { subject: CMPUT, level_in: [200] } }
+    source: "any 200-level Computing Science course."
+    bridge: true
+
+  CMPUT 401:
+    prereq: CMPUT 301
+    source: "CMPUT 301. Credit may be obtained in only one of CMPUT 401, BTM 419, or MIS 419."
+    bridge: true
+
+  CMPUT 402:
+    prereq: CMPUT 301
+    source: "CMPUT 301."
+    bridge: true
+
+  CMPUT 455:
+    prereq: { pattern: { subject: CMPUT, level_in: [300] } }
+    source: "any 300-level Computing Science course."
+    bridge: true
+
+  CMPUT 461:
+    prereq: { all_of: [ { one_of: [CMPUT 201, CMPUT 275] }, { pattern: { subject: CMPUT, level_in: [300] } } ] }
+    source: "201 or 275, and any 300-level Computing Science course."
+    bridge: true
+
+# --- VERIFICATION TRAIL --------------------------------------------------------------------------
+verification:
+  groups_source: "programs.jsonl, poid 110935 'Major in Computing Science Requirements' (blocks 45-55), catoid 69, fetched 2026-06-28"
+  prereq_source: "courses.jsonl, fetched_at 2026-06-28 (subjects cmput/math/stat present)"
+  checked:
+    - "Requirement groups rebuilt from the LIVE calendar (programs.jsonl blocks 45-55); the original Aug 7/24 worksheet disagreed and was discarded for the groups."
+    - "Live restructure captured: 204+272 mandatory (senior_required); choice set {201,229,291} (senior_choice); NO senior STAT; 300/400 pool = 15u."
+    - "Units: every named course confirmed 3.0 via scrape `credits` (21/21 after dropping STAT 252/266)."
+    - "Total: foundation 18 + senior 36 = 54; 15u/6u senior pattern groups are additive."
+    - "Note 1(a) (174<->274, 175<->275) encoded as one_of in foundation_core; Note 1(b): BROAD reading."
+    - "Every prereq/coreq entry carries its verbatim scrape `source` string (no values from memory)."
+    - "Credit-exclusions transcribed verbatim; CMPUT 174's exclusion decomposed into pairs (the 4-way set wrongly forbade the required 274+275 combination)."
+    - "ELECTIVE BRIDGE (directive3 G2): 10 CMPUT 300/400 electives (301,303,331,333,350,355,401,402,455,461) added with verbatim prereq sources, all satisfiable from {core + bridge}."
+  decisions_locked:   # directive3 G1 — these were the open items; now resolved
+    - "catalog_year = 2026-2027, confirmed against the live calendar (catoid=69 hosts Fall 2026/Winter 2027 + Spring/Summer 2027 dates)."
+    - "External prereqs = ASSUMED (enforce_external_prereqs=False). Consequence stated in planner/README: the engine checks in-program prereq ordering, NOT the external MATH chain behind STAT 235/265, so STAT-path feasibility is partial."
+    - "CMPUT 300 = LOCKED literal reading (CMPUT 100-level + any-subject 200-level); needs_review cleared, see its entry."
+  still_assumed:
+    - "High-school prereqs satisfied-by-admission (conventions.hs_satisfied_by_admission)."

@@ -1,0 +1,31 @@
+plan_id: adv_six_400
+description: >-
+  THE ADVERSARIAL "defeat-simple" plan (directive2 Phase A / directive3 G3).
+  Foundation, senior core, choice and ethics are all satisfied.  The two senior
+  pattern pools — senior_cmput_300_400 (15u) and senior_cmput_400 (6u), 21 DISTINCT
+  units in total — are then "covered" by only SIX 400-level CMPUT courses = 18
+  units, and no 300-level courses at all.
+
+  A naive bucket-counter that scores each pool independently PASSES this plan: the
+  300/400 pool sees 6 eligible courses (18u >= 15u) and the 400 pool sees the same
+  6 courses (18u >= 6u).  But each course may be credited to at most one pool, so a
+  correct GLOBAL matching can supply at most 18u of the 21u required and the plan
+  must FAIL (senior_cmput_300_400 ends up 3u short).  If the engine passes this, it
+  is bucket-counting.
+
+  Scope note: this is an ENGINE UNIT-TEST fixture for the matching, not a graded
+  Phase-F query plan, so it intentionally uses six 400-level electives that are
+  OUTSIDE the G2 bridge (415, 466, 414, 428, 429, 463).  They have no gold DAG
+  entry, so no elective-prereq failures are introduced and the SOLE failure is the
+  matching shortfall — keeping the demonstration crisp.
+expected: invalid
+expected_reasons: ["requirement_shortfall", "senior_cmput_300_400"]
+terms:
+  - term: "Fall Term 2026"
+    courses: [CMPUT 174, MATH 125, MATH 154, STAT 151]
+  - term: "Winter Term 2027"
+    courses: [CMPUT 175, CMPUT 272, MATH 136]
+  - term: "Fall Term 2027"
+    courses: [CMPUT 201, CMPUT 204, CMPUT 200, CMPUT 291, CMPUT 415, CMPUT 466]
+  - term: "Winter Term 2028"
+    courses: [CMPUT 414, CMPUT 428, CMPUT 429, CMPUT 463]

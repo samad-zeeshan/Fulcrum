@@ -1,0 +1,19 @@
+plan_id: fail_credit_exclusion
+description: >-
+  The valid_174_stream plan, but the student also takes CMPUT 274 (in addition to
+  CMPUT 174).  The gold records "Credit cannot be obtained for both CMPUT 174 and
+  CMPUT 274" — a plan may claim credit for at most one.  Must fail on the credit
+  exclusion.
+expected: invalid
+expected_reasons: ["credit_exclusion", "CMPUT 174", "CMPUT 274"]
+terms:
+  - term: "Fall Term 2026"
+    courses: [CMPUT 174, CMPUT 274, MATH 125, MATH 154, STAT 151]
+  - term: "Winter Term 2027"
+    courses: [CMPUT 175, CMPUT 272, MATH 136]
+  - term: "Fall Term 2027"
+    courses: [CMPUT 201, CMPUT 204, CMPUT 200, CMPUT 291]
+  - term: "Winter Term 2028"
+    courses: [CMPUT 301, CMPUT 333, CMPUT 355]
+  - term: "Fall Term 2028"
+    courses: [CMPUT 303, CMPUT 331, CMPUT 401, CMPUT 402]

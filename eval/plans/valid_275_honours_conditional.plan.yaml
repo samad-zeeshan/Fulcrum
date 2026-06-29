@@ -1,0 +1,22 @@
+plan_id: valid_275_honours_conditional
+description: >-
+  A complete plan on the CMPUT 274/275 accelerated stream, all courses within the
+  G2 scope.  Taking CMPUT 275 fires the gold conditional `note1_275_blocks_201`:
+  CMPUT 201 becomes ineligible and `senior_choice` is rewritten to {229, 291}
+  (+ any CMPUT >= 200).  This plan uses 229 + 291 for the choice group and never
+  touches 201, so it must remain VALID with the conditional applied.  Also confirms
+  274 + 275 together do NOT trip a credit exclusion (275's prereq IS 274), and that
+  the bridge electives' prereqs are satisfied via 275 (e.g. 301/333 take 201-or-275).
+expected: valid
+expected_reasons: []
+terms:
+  - term: "Fall Term 2026"
+    courses: [CMPUT 274, MATH 125, MATH 154, STAT 151]
+  - term: "Winter Term 2027"
+    courses: [CMPUT 275, CMPUT 272, MATH 136]
+  - term: "Fall Term 2027"
+    courses: [CMPUT 204, CMPUT 229, CMPUT 200, CMPUT 291]
+  - term: "Winter Term 2028"
+    courses: [CMPUT 301, CMPUT 333, CMPUT 355]
+  - term: "Fall Term 2028"
+    courses: [CMPUT 303, CMPUT 331, CMPUT 401, CMPUT 402]

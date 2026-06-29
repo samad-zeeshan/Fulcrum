@@ -1,0 +1,22 @@
+plan_id: valid_174_stream
+description: >-
+  A complete, prerequisite-clean Computing Science Major plan on the standard
+  CMPUT 174/175 stream, over five Fall/Winter terms.  Every course is drawn from
+  the directive3-G2 scope ({21 named core} + {10-course elective bridge}), so all
+  prerequisites — including the electives' — are verified by the gold DAG, not
+  merely assumed.  Exercises every requirement group, the global matching (the 15u
+  300/400 pool and the 6u 400 pool are filled with DISTINCT courses), elective
+  prereq chains (401/402 require 301), and both availability paths (the first two
+  terms are exact snapshot terms; the later three are season-recurrence).
+expected: valid
+terms:
+  - term: "Fall Term 2026"
+    courses: [CMPUT 174, MATH 125, MATH 154, STAT 151]
+  - term: "Winter Term 2027"
+    courses: [CMPUT 175, CMPUT 272, MATH 136]
+  - term: "Fall Term 2027"
+    courses: [CMPUT 201, CMPUT 204, CMPUT 200, CMPUT 291]
+  - term: "Winter Term 2028"
+    courses: [CMPUT 301, CMPUT 333, CMPUT 355]
+  - term: "Fall Term 2028"
+    courses: [CMPUT 303, CMPUT 331, CMPUT 401, CMPUT 402]

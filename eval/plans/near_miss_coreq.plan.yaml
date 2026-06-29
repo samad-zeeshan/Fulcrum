@@ -1,0 +1,19 @@
+plan_id: near_miss_coreq
+description: >-
+  Subtle ordering near-miss: CMPUT 291 is scheduled a term BEFORE its corequisite
+  (one of CMPUT 201/275) is taken. Everything else mirrors a valid plan, so it
+  reads as fine; the engine catches the coreq-ordering violation. (291's coreq must
+  be in the same-or-earlier term.)
+expected: invalid
+expected_reasons: ["coreq_unsatisfied", "CMPUT 291"]
+terms:
+  - term: "Fall Term 2026"
+    courses: [CMPUT 174, MATH 125, MATH 154, STAT 151]
+  - term: "Winter Term 2027"
+    courses: [CMPUT 175, CMPUT 272, MATH 136]
+  - term: "Fall Term 2027"
+    courses: [CMPUT 291, CMPUT 204, CMPUT 200]
+  - term: "Winter Term 2028"
+    courses: [CMPUT 201, CMPUT 229, CMPUT 301, CMPUT 333, CMPUT 355]
+  - term: "Fall Term 2028"
+    courses: [CMPUT 303, CMPUT 331, CMPUT 401, CMPUT 402]

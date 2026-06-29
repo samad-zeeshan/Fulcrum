@@ -1,0 +1,269 @@
+- id: factual_offered_000
+  type: factual_offered
+  text: Is CMPUT 174 offered in Fall Term 2026?
+  course: CMPUT 174
+  term: Fall Term 2026
+- id: factual_offered_001
+  type: factual_offered
+  text: Is CMPUT 174 offered in Spring Term 2026?
+  course: CMPUT 174
+  term: Spring Term 2026
+- id: factual_offered_002
+  type: factual_offered
+  text: Is CMPUT 274 offered in Winter Term 2027?
+  course: CMPUT 274
+  term: Winter Term 2027
+- id: factual_offered_003
+  type: factual_offered
+  text: Is CMPUT 275 offered in Fall Term 2026?
+  course: CMPUT 275
+  term: Fall Term 2026
+- id: factual_offered_004
+  type: factual_offered
+  text: Is CMPUT 304 offered in Fall Term 2026?
+  course: CMPUT 304
+  term: Fall Term 2026
+- id: factual_offered_005
+  type: factual_offered
+  text: Is CMPUT 333 offered in Winter Term 2027?
+  course: CMPUT 333
+  term: Winter Term 2027
+- id: factual_offered_006
+  type: factual_offered
+  text: Is CMPUT 333 offered in Fall Term 2026?
+  course: CMPUT 333
+  term: Fall Term 2026
+- id: factual_offered_007
+  type: factual_offered
+  text: Is CMPUT 401 offered in Winter Term 2027?
+  course: CMPUT 401
+  term: Winter Term 2027
+- id: factual_offered_008
+  type: factual_offered
+  text: Is CMPUT 402 offered in Fall Term 2026?
+  course: CMPUT 402
+  term: Fall Term 2026
+- id: factual_offered_009
+  type: factual_offered
+  text: Is CMPUT 455 offered in Winter Term 2027?
+  course: CMPUT 455
+  term: Winter Term 2027
+- id: factual_offered_010
+  type: factual_offered
+  text: Is CMPUT 461 offered in Fall Term 2026?
+  course: CMPUT 461
+  term: Fall Term 2026
+- id: factual_offered_011
+  type: factual_offered
+  text: Is CMPUT 291 offered in Fall Term 2026?
+  course: CMPUT 291
+  term: Fall Term 2026
+- id: factual_offered_012
+  type: factual_offered
+  text: Is CMPUT 200 offered in Fall Term 2026?
+  course: CMPUT 200
+  term: Fall Term 2026
+- id: factual_offered_013
+  type: factual_offered
+  text: Is CMPUT 229 offered in Winter Term 2027?
+  course: CMPUT 229
+  term: Winter Term 2027
+- id: factual_offered_014
+  type: factual_offered
+  text: Is MATH 125 offered in Winter Term 2027?
+  course: MATH 125
+  term: Winter Term 2027
+- id: factual_offered_015
+  type: factual_offered
+  text: Is MATH 136 offered in Fall Term 2026?
+  course: MATH 136
+  term: Fall Term 2026
+- id: factual_offered_016
+  type: factual_offered
+  text: Is STAT 151 offered in Fall Term 2026?
+  course: STAT 151
+  term: Fall Term 2026
+- id: factual_offered_017
+  type: factual_offered
+  text: Is STAT 265 offered in Spring Term 2026?
+  course: STAT 265
+  term: Spring Term 2026
+- id: factual_offered_018
+  type: factual_offered
+  text: Is CMPUT 350 offered in Winter Term 2027?
+  course: CMPUT 350
+  term: Winter Term 2027
+- id: factual_offered_019
+  type: factual_offered
+  text: Is CMPUT 355 offered in Fall Term 2026?
+  course: CMPUT 355
+  term: Fall Term 2026
+- id: factual_prereq_000
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 175?
+  course: CMPUT 175
+- id: factual_prereq_001
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 201?
+  course: CMPUT 201
+- id: factual_prereq_002
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 204?
+  course: CMPUT 204
+- id: factual_prereq_003
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 229?
+  course: CMPUT 229
+- id: factual_prereq_004
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 272?
+  course: CMPUT 272
+- id: factual_prereq_005
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 291?
+  course: CMPUT 291
+- id: factual_prereq_006
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 300?
+  course: CMPUT 300
+- id: factual_prereq_007
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 301?
+  course: CMPUT 301
+- id: factual_prereq_008
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 303?
+  course: CMPUT 303
+- id: factual_prereq_009
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 331?
+  course: CMPUT 331
+- id: factual_prereq_010
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 333?
+  course: CMPUT 333
+- id: factual_prereq_011
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 350?
+  course: CMPUT 350
+- id: factual_prereq_012
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 401?
+  course: CMPUT 401
+- id: factual_prereq_013
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 402?
+  course: CMPUT 402
+- id: factual_prereq_014
+  type: factual_prereq
+  text: What is the prerequisite for CMPUT 461?
+  course: CMPUT 461
+- id: factual_prereq_015
+  type: factual_prereq
+  text: What is the prerequisite for STAT 235?
+  course: STAT 235
+- id: plan_validity_000
+  type: plan_validity
+  text: 'Is the following Computing Science major plan valid? Fall Term 2026: CMPUT
+    174, MATH 125, MATH 154, STAT 151 | Winter Term 2027: CMPUT 175, CMPUT 272, MATH
+    136 | Fall Term 2027: CMPUT 201, CMPUT 204, CMPUT 200, CMPUT 291, CMPUT 415, CMPUT
+    466 | Winter Term 2028: CMPUT 414, CMPUT 428, CMPUT 429, CMPUT 463'
+  plan_ref: eval/plans/adv_six_400.plan.yaml
+- id: plan_validity_001
+  type: plan_validity
+  text: 'Is the following Computing Science major plan valid? Fall Term 2026: CMPUT
+    174, CMPUT 274, MATH 125, MATH 154, STAT 151 | Winter Term 2027: CMPUT 175, CMPUT
+    272, MATH 136 | Fall Term 2027: CMPUT 201, CMPUT 204, CMPUT 200, CMPUT 291 | Winter
+    Term 2028: CMPUT 301, CMPUT 333, CMPUT 355 | Fall Term 2028: CMPUT 303, CMPUT
+    331, CMPUT 401, CMPUT 402'
+  plan_ref: eval/plans/fail_credit_exclusion.plan.yaml
+- id: plan_validity_002
+  type: plan_validity
+  text: 'Is the following Computing Science major plan valid? Fall Term 2026: CMPUT
+    204, CMPUT 174, MATH 125, MATH 154, STAT 151 | Winter Term 2027: CMPUT 175, CMPUT
+    272, MATH 136 | Fall Term 2027: CMPUT 201, CMPUT 200, CMPUT 291 | Winter Term
+    2028: CMPUT 301, CMPUT 333, CMPUT 355 | Fall Term 2028: CMPUT 303, CMPUT 331,
+    CMPUT 401, CMPUT 402'
+  plan_ref: eval/plans/fail_prereq_order.plan.yaml
+- id: plan_validity_003
+  type: plan_validity
+  text: 'Is the following Computing Science major plan valid? Fall Term 2026: CMPUT
+    174, MATH 125, MATH 154, STAT 151 | Winter Term 2027: CMPUT 175, CMPUT 272, MATH
+    136 | Fall Term 2027: CMPUT 291, CMPUT 204, CMPUT 200 | Winter Term 2028: CMPUT
+    201, CMPUT 229, CMPUT 301, CMPUT 333, CMPUT 355 | Fall Term 2028: CMPUT 303, CMPUT
+    331, CMPUT 401, CMPUT 402'
+  plan_ref: eval/plans/near_miss_coreq.plan.yaml
+- id: plan_validity_004
+  type: plan_validity
+  text: 'Is the following Computing Science major plan valid? Fall Term 2026: CMPUT
+    174, MATH 125, MATH 154, STAT 151 | Winter Term 2027: CMPUT 175, CMPUT 272, MATH
+    136 | Fall Term 2027: CMPUT 201, CMPUT 204, CMPUT 200, CMPUT 291 | Winter Term
+    2028: CMPUT 301, CMPUT 333, CMPUT 355 | Fall Term 2028: CMPUT 303, CMPUT 401,
+    CMPUT 402'
+  plan_ref: eval/plans/near_miss_units_short.plan.yaml
+- id: plan_validity_005
+  type: plan_validity
+  text: 'Is the following Computing Science major plan valid? Fall Term 2026: CMPUT
+    174, MATH 125, MATH 154, STAT 151 | Winter Term 2027: CMPUT 175, CMPUT 272, MATH
+    136 | Fall Term 2027: CMPUT 201, CMPUT 204, CMPUT 200, CMPUT 291 | Winter Term
+    2028: CMPUT 301, CMPUT 333, CMPUT 355 | Fall Term 2028: CMPUT 303, CMPUT 331,
+    CMPUT 401, CMPUT 402'
+  plan_ref: eval/plans/valid_174_stream.plan.yaml
+- id: plan_validity_006
+  type: plan_validity
+  text: 'Is the following Computing Science major plan valid? Fall Term 2026: CMPUT
+    274, MATH 125, MATH 154, STAT 151 | Winter Term 2027: CMPUT 275, CMPUT 272, MATH
+    136 | Fall Term 2027: CMPUT 204, CMPUT 229, CMPUT 200, CMPUT 291 | Winter Term
+    2028: CMPUT 301, CMPUT 333, CMPUT 355 | Fall Term 2028: CMPUT 303, CMPUT 331,
+    CMPUT 401, CMPUT 402'
+  plan_ref: eval/plans/valid_275_honours_conditional.plan.yaml
+- id: plan_construction_000
+  type: plan_construction
+  text: Build a course plan that completes the Computing Science major in as few terms
+    as possible. I am starting fresh. Use alternating Fall and Winter terms (label
+    them 'Fall' / 'Winter'). Only place a course in a term in which it is offered,
+    and respect prerequisites (a prerequisite must be in an earlier term). Output
+    ONLY YAML with a 'terms' list, each item having a 'term' and a list of 'courses'.
+  taken: []
+- id: plan_construction_001
+  type: plan_construction
+  text: 'Build a course plan that completes the Computing Science major in as few
+    terms as possible. I have already completed: CMPUT 174, CMPUT 175, MATH 125, MATH
+    154, MATH 136, STAT 151. Use alternating Fall and Winter terms (label them ''Fall''
+    / ''Winter''). Only place a course in a term in which it is offered, and respect
+    prerequisites (a prerequisite must be in an earlier term). Output ONLY YAML with
+    a ''terms'' list, each item having a ''term'' and a list of ''courses''.'
+  taken:
+  - CMPUT 174
+  - CMPUT 175
+  - MATH 125
+  - MATH 154
+  - MATH 136
+  - STAT 151
+- id: plan_construction_002
+  type: plan_construction
+  text: 'Build a course plan that completes the Computing Science major in as few
+    terms as possible. I have already completed: CMPUT 174, MATH 125. Use alternating
+    Fall and Winter terms (label them ''Fall'' / ''Winter''). Only place a course
+    in a term in which it is offered, and respect prerequisites (a prerequisite must
+    be in an earlier term). Output ONLY YAML with a ''terms'' list, each item having
+    a ''term'' and a list of ''courses''.'
+  taken:
+  - CMPUT 174
+  - MATH 125
+- id: plan_construction_003
+  type: plan_construction
+  text: 'Build a course plan that completes the Computing Science major in as few
+    terms as possible. I have already completed: CMPUT 274, CMPUT 275, MATH 125, MATH
+    154, MATH 136, STAT 151, CMPUT 272. Use alternating Fall and Winter terms (label
+    them ''Fall'' / ''Winter''). Only place a course in a term in which it is offered,
+    and respect prerequisites (a prerequisite must be in an earlier term). Output
+    ONLY YAML with a ''terms'' list, each item having a ''term'' and a list of ''courses''.'
+  taken:
+  - CMPUT 274
+  - CMPUT 275
+  - MATH 125
+  - MATH 154
+  - MATH 136
+  - STAT 151
+  - CMPUT 272

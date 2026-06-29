@@ -1,0 +1,20 @@
+plan_id: fail_prereq_order
+description: >-
+  Identical course SET to valid_174_stream, but CMPUT 204 is pulled into the very
+  first term — before its prerequisites (one of CMPUT 175/275, AND CMPUT 272, AND
+  a calculus course) are ever taken.  Requirement matching still succeeds and every
+  elective's prereq is still met (204 now precedes them); the plan fails purely on
+  CMPUT 204's own prerequisite ordering.
+expected: invalid
+expected_reasons: ["prereq_unsatisfied", "CMPUT 204"]
+terms:
+  - term: "Fall Term 2026"
+    courses: [CMPUT 204, CMPUT 174, MATH 125, MATH 154, STAT 151]
+  - term: "Winter Term 2027"
+    courses: [CMPUT 175, CMPUT 272, MATH 136]
+  - term: "Fall Term 2027"
+    courses: [CMPUT 201, CMPUT 200, CMPUT 291]
+  - term: "Winter Term 2028"
+    courses: [CMPUT 301, CMPUT 333, CMPUT 355]
+  - term: "Fall Term 2028"
+    courses: [CMPUT 303, CMPUT 331, CMPUT 401, CMPUT 402]

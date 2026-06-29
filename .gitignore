@@ -1,0 +1,64 @@
+# --- Markdown / docs (per owner request: keep .md out of version control) ---
+*.md
+*.markdown
+
+# Exception (directive3 G4): the portfolio centerpiece docs a hiring manager opens
+# ARE committed, while session/passdown/agent .md stay ignored above.
+!README.md
+!planner/README.md
+!reports/
+!reports/*.md
+!eval/**/README.md
+
+# --- Agent / tooling workspaces ---
+.codex/
+.claude/
+.claude*/
+**/.codex/
+**/.claude/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Playwright / browser caches ---
+ms-playwright/
+
+# --- RAG index artifacts (rebuilt from rag/build.py; don't commit the binary) ---
+rag/index/
+
+# --- eval run logs (raw per-query logs; commit a curated sample instead) ---
+eval/logs/
+
+# --- Secrets (NEVER commit API keys) ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets.*
+
+# --- OS noise ---
+Thumbs.db
+.DS_Store
+
+# --- Scraper raw HTML cache ---
+# The raw cache can be large. It is NOT committed by default; flip this with the
+# owner if maximal reproducibility (committed raw HTML) is preferred.
+corpus/raw/
+
+# NOTE: corpus/courses.jsonl and corpus/programs.jsonl are the structured
+# deliverables and are intentionally NOT ignored (they are force-added in the
+# initial commit despite no extension filter; *.md ignores RUN_REPORT.md, which
+# is regenerable from the cache).

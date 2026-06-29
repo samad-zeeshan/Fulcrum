@@ -1,0 +1,62 @@
+{
+  "RAG-always": {
+    "config": "RAG-always",
+    "quality_overall": 0.6489,
+    "quality_by_type": {
+      "factual_offered": 0.65,
+      "factual_prereq": 0.9062,
+      "plan_construction": 0.0,
+      "plan_validity": 0.4286
+    },
+    "citation_pass_rate": 0.9,
+    "cost_usd_total": 0.001557,
+    "cost_usd_mean": 3.314e-05,
+    "latency_p50": 1.0113,
+    "latency_p95": 3.4631,
+    "cache_hit_rate": 0.8528,
+    "n": 47
+  },
+  "CAG-always": {
+    "config": "CAG-always",
+    "quality_overall": 0.4468,
+    "quality_by_type": {
+      "factual_offered": 0.0,
+      "factual_prereq": 1.0,
+      "plan_construction": 0.0,
+      "plan_validity": 0.7143
+    },
+    "citation_pass_rate": 1,
+    "cost_usd_total": 0.00415,
+    "cost_usd_mean": 8.831e-05,
+    "latency_p50": 1.2157,
+    "latency_p95": 7.5391,
+    "cache_hit_rate": 0.9594,
+    "n": 47
+  },
+  "Routed": {
+    "config": "Routed",
+    "quality_overall": 0.7234,
+    "quality_by_type": {
+      "factual_offered": 0.65,
+      "factual_prereq": 1.0,
+      "plan_construction": 0.0,
+      "plan_validity": 0.7143
+    },
+    "citation_pass_rate": 0.9,
+    "cost_usd_total": 0.004294,
+    "cost_usd_mean": 9.136e-05,
+    "latency_p50": 1.1067,
+    "latency_p95": 10.1483,
+    "cache_hit_rate": 0.9441,
+    "n": 47
+  },
+  "meta": {
+    "snapshot": "2026-06-28",
+    "snapshot_synthetic": false,
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "is_stub": false,
+    "embedder": "hashing-1024",
+    "n_queries": 47
+  }
+}

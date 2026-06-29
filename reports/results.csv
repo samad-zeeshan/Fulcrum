@@ -1,0 +1,4 @@
+config,quality_overall,factual_offered,factual_prereq,plan_validity,plan_construction,citation_pass_rate,cost_usd_total,latency_p50,latency_p95,cache_hit_rate
+RAG-always,0.6489,0.65,0.9062,0.4286,0.0,0.9,0.001557,1.0113,3.4631,0.8528
+CAG-always,0.4468,0.0,1.0,0.7143,0.0,1,0.00415,1.2157,7.5391,0.9594
+Routed,0.7234,0.65,1.0,0.7143,0.0,0.9,0.004294,1.1067,10.1483,0.9441

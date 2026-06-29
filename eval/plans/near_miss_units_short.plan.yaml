@@ -1,0 +1,23 @@
+plan_id: near_miss_units_short
+description: >-
+  Looks like a complete plan, but the 300/400-level pool is one course short:
+  valid_174_stream with CMPUT 331 dropped, leaving 12u in senior_cmput_300_400
+  (needs 15u). A near-miss designed so plan-validity quality is not trivial — a
+  shallow reader counts "lots of senior CMPUT" and says valid; the engine finds
+  the 3u shortfall.
+expected: invalid
+# 18u available for the 21u senior pools -> 3u total shortfall; the min-shortfall
+# solve may place the 3u on either senior pattern pool (degenerate optimum), so we
+# assert the shortfall, not which pool.
+expected_reasons: ["requirement_shortfall"]
+terms:
+  - term: "Fall Term 2026"
+    courses: [CMPUT 174, MATH 125, MATH 154, STAT 151]
+  - term: "Winter Term 2027"
+    courses: [CMPUT 175, CMPUT 272, MATH 136]
+  - term: "Fall Term 2027"
+    courses: [CMPUT 201, CMPUT 204, CMPUT 200, CMPUT 291]
+  - term: "Winter Term 2028"
+    courses: [CMPUT 301, CMPUT 333, CMPUT 355]
+  - term: "Fall Term 2028"
+    courses: [CMPUT 303, CMPUT 401, CMPUT 402]
