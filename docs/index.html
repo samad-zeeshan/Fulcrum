@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fulcrum, a degree plan checker that names the requirement you miss</title>
+<meta name="description" content="Fulcrum reads a university course plan and tells you which degree requirement it fails. A real recorded run of the checker plays on this page.">
+<!-- An empty inline icon, so the browser does not request a favicon file
+     that is not there. No network request is made for it. -->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="kit.css">
+<style>
+/* ==========================================================================
+   Page styles for Fulcrum. Only kit tokens are used, so every colour pairing
+   on this page is one the kit already measured. No new colours, no url(),
+   no @import, no network.
+
+   SIGNATURE: "the thread board". The plan's courses in one column, the
+   degree's requirement lines in the other, and one hairline thread from each
+   course to the single line it pays for. Every line carries one terminal per
+   course it needs. The terminal that never gets a thread stays an open brass
+   ring, so being one course short becomes a hole you can point at.
+   ========================================================================== */
+
+/* ---- the player -------------------------------------------------------- */
+
+/* Tuned to the tallest step so the stage never grows mid run. Measured in
+   Chrome at a wide viewport and at 360px, where the board's own horizontal
+   scrollbar adds its height. See docs/NOTES.md. */
+/* The kit computes --k-player-caption-min at :root, so raising the line count
+   here only works if the reserve is recomputed here as well. */
+#fu-run {
+  --k-player-stage-min: 33rem;
+  --k-player-caption-lines: 3;
+  --k-player-caption-min: calc(3 * var(--k-leading-snug) * 1em + 2 * var(--k-s4) + 2px);
+}
+
+@media (max-width: 30em) {
+  #fu-run {
+    --k-player-caption-lines: 4;
+    --k-player-caption-min: calc(4 * var(--k-leading-snug) * 1em + 2 * var(--k-s4) + 2px);
+  }
+}
+
+/* ---- the thread board --------------------------------------------------- */
+
+.fu-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s3);
+}
+
+/* The board keeps one fixed internal width and scrolls inside its own box on
+   a narrow screen, so the page itself never moves sideways. */
+.fu-board__scroll { padding-bottom: var(--k-s1); }
+
+/* One fixed internal width at every viewport, so every row keeps the same
+   height and the reserved stage height holds from 360px upward. */
+.fu-boardgrid { min-width: 31rem; max-width: 42rem; }
+
+.fu-board__head,
+.fu-cols {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  column-gap: 3rem;
+}
+
+.fu-board__head { margin-bottom: var(--k-s2); }
+
+/* Kept on one line at every width. The left label is allowed to run a little
+   way into the empty gutter rather than wrap and change the board's height. */
+.fu-board__head .k-label { white-space: nowrap; }
+
+.fu-cols {
+  position: relative;
+  align-items: start;
+}
+
+/* The threads. Behind the two columns, drawn across the empty gutter between
+   them. Never interactive and never announced: every fact a thread carries is
+   also written in the row text, the status line and the caption. */
+.fu-wires {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.fu-wire {
+  fill: none;
+  stroke: var(--k-signal);
+  stroke-width: 1.15;
+  stroke-linecap: round;
+}
+
+.fu-wire--diverted {
+  stroke: var(--k-ember);
+  stroke-width: 2.4;
+}
+
+/* ---- left column: the plan ---------------------------------------------- */
+
+.fu-plan {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fu-course {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  min-height: 1.3rem;
+}
+
+.fu-course__term {
+  flex: none;
+  width: 2rem;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-text-2xs);
+  color: var(--k-slate);
+  white-space: nowrap;
+  border-right: var(--k-bw-hair) solid var(--k-rule);
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.fu-course--first .fu-course__term { color: var(--k-ink); }
+
+.fu-course__code {
+  font-family: var(--k-font-mono);
+  font-size: var(--k-text-xs);
+  color: var(--k-ink);
+  white-space: nowrap;
+}
+
+/* Decorative tick. What it stands for is written in full in the status line
+   under the board and read out in the caption, so nothing here is colour only. */
+.fu-course__mark {
+  flex: none;
+  width: 0.7rem;
+  height: 0.75rem;
+  position: relative;
+}
+
+.fu-course__mark::after {
+  content: "";
+  position: absolute;
+  left: 0.16rem;
+  top: 0.04rem;
+  width: 0.26rem;
+  height: 0.48rem;
+  border-right: var(--k-bw-mid) solid var(--k-signal);
+  border-bottom: var(--k-bw-mid) solid var(--k-signal);
+  transform: rotate(42deg);
+  opacity: 0;
+}
+
+.fu-board[data-checked="true"] .fu-course__mark::after { opacity: 1; }
+
+/* The pin each thread leaves from. */
+.fu-course__pin {
+  margin-left: auto;
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--k-r-pill);
+  background-color: var(--k-rule);
+}
+
+.fu-board[data-wired="true"] .fu-course__pin { background-color: var(--k-signal); }
+
+/* ---- right column: the degree ------------------------------------------- */
+
+.fu-reqs {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fu-req {
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  min-height: 2.4rem;
+  border-bottom: var(--k-bw-hair) solid var(--k-rule);
+}
+
+.fu-req:last-child { border-bottom: 0; }
+
+.fu-req__pins {
+  flex: none;
+  width: 3.9rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* A terminal. Open by default: a brass ring with the panel showing through.
+   It fills with ink only once a real course has been assigned to it. */
+.fu-pin {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--k-r-pill);
+  border: var(--k-bw-mid) solid var(--k-ember);
+  background-color: var(--k-panel);
+}
+
+.fu-board[data-wired="true"] .fu-pin[data-filled="true"] {
+  border-color: var(--k-signal);
+  background-color: var(--k-signal);
+}
+
+/* The one terminal that never gets a thread. Kept ringed and given a dashed
+   halo, so it reads as a hole and not as a colour. */
+.fu-board[data-gap="true"] .fu-pin[data-filled="false"] {
+  outline: var(--k-bw-hair) dashed var(--k-ember);
+  outline-offset: 3px;
+}
+
+.fu-req__name {
+  min-width: 0;
+  font-size: var(--k-text-sm);
+  line-height: var(--k-leading-snug);
+  color: var(--k-ink);
+}
+
+/* Fixed width, so swapping "needs 5" for "5 of 5" cannot reflow the row and
+   move a terminal out from under its thread. */
+.fu-req__count {
+  margin-left: auto;
+  flex: none;
+  width: 3.2rem;
+  text-align: right;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-text-2xs);
+  color: var(--k-slate);
+  white-space: nowrap;
+}
+
+.fu-board[data-gap="true"] .fu-req[data-short="true"] .fu-req__count {
+  color: var(--k-ember);
+  font-weight: 700;
+}
+
+/* ---- the status strip under the board ----------------------------------- */
+
+/* Two lines are reserved. Every status line and every second line is short
+   enough to fit one line at the board's fixed 31rem width, so this holds at
+   every viewport. */
+.fu-status {
+  min-height: 4rem;
+  margin: var(--k-s3) 0 0;
+  padding: var(--k-s3);
+  background-color: var(--k-sunken);
+  border: var(--k-bw-hair) solid var(--k-rule);
+  border-left: var(--k-bw-heavy) solid var(--k-edge);
+  border-radius: var(--k-r-xs);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-text-xs);
+  line-height: 1.5;
+  color: var(--k-ink);
+}
+
+.fu-board[data-gap="true"] .fu-status { border-left-color: var(--k-ember); }
+
+.fu-status__line { display: block; }
+.fu-status__line--quiet { color: var(--k-slate); }
+
+/* ---- three points -------------------------------------------------------- */
+
+.fu-points {
+  display: grid;
+  gap: var(--k-s4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 52em) {
+  .fu-points { grid-template-columns: repeat(3, 1fr); }
+}
+
+.fu-point {
+  min-width: 0;
+  background-color: var(--k-panel);
+  border: var(--k-bw-hair) solid var(--k-rule);
+  border-top: var(--k-bw-heavy) solid var(--k-signal);
+  border-radius: var(--k-r-sm);
+  padding: var(--k-s4);
+}
+
+.fu-point h3 {
+  font-size: var(--k-text-base);
+  margin-bottom: var(--k-s2);
+}
+
+.fu-point p {
+  margin: 0;
+  font-size: var(--k-text-sm);
+  color: var(--k-slate);
+  line-height: var(--k-leading-snug);
+}
+
+/* ---- results table ------------------------------------------------------- */
+
+.fu-table-wrap { margin-block: var(--k-s5) var(--k-s5); }
+
+.fu-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 36rem;
+  font-size: var(--k-text-sm);
+  background-color: var(--k-panel);
+}
+
+.fu-table caption {
+  text-align: left;
+  padding-bottom: var(--k-s3);
+  font-size: var(--k-text-sm);
+  color: var(--k-slate);
+}
+
+.fu-table th,
+.fu-table td {
+  padding: var(--k-s3);
+  border-bottom: var(--k-bw-hair) solid var(--k-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.fu-table thead th {
+  font-family: var(--k-font-display);
+  font-size: var(--k-text-2xs);
+  font-weight: 700;
+  letter-spacing: var(--k-track-label);
+  text-transform: uppercase;
+  color: var(--k-slate);
+  background-color: var(--k-sunken);
+}
+
+.fu-table tbody th { font-weight: 650; }
+
+.fu-table td.fu-num {
+  font-family: var(--k-font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fu-table tbody tr[data-best="true"] > * { background-color: var(--k-signal-wash); }
+
+.fu-table tbody tr[data-best="true"] > *:first-child {
+  box-shadow: inset var(--k-bw-heavy) 0 0 0 var(--k-signal);
+}
+
+/* ---- small helpers -------------------------------------------------------- */
+
+.fu-steps {
+  margin: 0;
+  padding-left: var(--k-s5);
+  display: grid;
+  gap: var(--k-s4);
+  max-width: var(--k-measure);
+}
+
+.fu-steps li { line-height: var(--k-leading-snug); }
+.fu-steps li::marker { color: var(--k-signal); font-weight: 700; }
+
+.fu-source {
+  display: block;
+  margin-top: var(--k-s1);
+  font-family: var(--k-font-mono);
+  font-size: var(--k-text-xs);
+  color: var(--k-slate);
+}
+
+.fu-note {
+  max-width: var(--k-measure);
+  color: var(--k-slate);
+  font-size: var(--k-text-sm);
+}
+
+.fu-lead {
+  max-width: var(--k-measure);
+  font-size: var(--k-text-md);
+  line-height: var(--k-leading-snug);
+}
+
+.fu-stack { display: grid; gap: var(--k-s5); }
+
+@media (max-width: 30em) {
+  .fu-table { min-width: 30rem; }
+}
+</style>
+<script src="data/fulcrum.js"></script>
+<script src="kit.js" defer></script>
+</head>
+<body>
+
+<header class="k-hero" data-k-hero-wash>
+  <div class="k-hero__wash" data-k-wash></div>
+  <div class="k-container k-hero__inner">
+    <span class="k-hero__eyebrow">Project</span>
+    <h1 class="k-hero__title">Fulcrum</h1>
+    <p class="k-hero__what">Fulcrum reads a university course plan and tells you which degree requirement it fails, and why.</p>
+    <p class="k-hero__who">For a Computing Science student at the University of Alberta, in the week they have to register.</p>
+    <div class="k-hero__meta">
+      <!-- Date: the day the run below was captured, 2026-07-27. Commit: the
+           HEAD of this repository at capture time,
+           d2db13f853c593115bb207746fbc2bea31c86a4a. Both are also recorded in
+           docs/data/fulcrum.json. -->
+      <a class="k-badge-run" href="data/fulcrum.json">
+        <span class="k-badge-run__dot"></span>
+        <span class="k-badge-run__text" data-k-badge-text>Recorded run, 2026-07-27, commit <span class="k-badge-run__sha">d2db13f</span></span>
+      </a>
+      <button class="k-theme-toggle" type="button" data-k-theme-toggle>
+        Theme: <span data-k-theme-label>Auto</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="k-container">
+
+  <!-- ==================================================================
+       1. THE PROBLEM
+       ================================================================== -->
+  <section class="k-section" aria-labelledby="fu-problem">
+    <h2 class="k-section__title" id="fu-problem">It is registration week, and nobody can tell you whether this plan graduates you</h2>
+    <p class="fu-lead">
+      A student sits with the course calendar open and five terms sketched out on paper.
+      Every course on the page looks right. The rules are spread over a dozen pages, they
+      overlap, and a few of them cancel each other out.
+    </p>
+    <p class="fu-note">
+      The advising office can answer, in three weeks, once the queue clears. Registration
+      opens on Monday. So the student registers, and finds out in the final year that one
+      line of the degree was never filled.
+    </p>
+  </section>
+
+  <!-- ==================================================================
+       2. THE DEMO
+       ================================================================== -->
+  <section class="k-section" aria-labelledby="fu-demo">
+    <h2 class="k-section__title" id="fu-demo">This plan does not graduate you, and here is the place it leaves empty</h2>
+    <p class="k-section__lede">
+      <!-- Five checks: planner/validate.py module docstring, "Runs exactly five
+           checks: duplicate credit, credit-exclusion, term availability,
+           prereq/coreq ordering, and the global requirement matching". -->
+      Press Play. The checker walks a real plan file through its five checks and stops on
+      the one that fails. You can step back at any point.
+    </p>
+
+    <div class="fu-stack">
+
+      <div class="k-player" id="fu-run">
+        <div class="k-player__bar">
+          <div class="k-player__controls">
+            <button class="k-player__btn" type="button" data-k-prev>Back</button>
+            <button class="k-player__btn k-player__btn--primary" type="button" data-k-play>
+              <span class="k-player__glyph" aria-hidden="true"></span>
+              <span data-k-play-label>Play</span>
+            </button>
+            <button class="k-player__btn" type="button" data-k-next>Next</button>
+          </div>
+          <span class="k-player__indicator" data-k-indicator>Step 1 of 7</span>
+        </div>
+        <div class="k-player__track" data-k-track></div>
+        <div class="k-player__stage" data-k-stage>
+
+          <div class="fu-board" id="fu-board" data-checked="false" data-wired="false" data-gap="false">
+            <div class="k-scroll-x fu-board__scroll">
+              <div class="fu-boardgrid">
+                <div class="fu-board__head">
+                  <!-- 17 courses and 5 terms: counted from
+                       eval/plans/near_miss_units_short.plan.yaml, also
+                       data/fulcrum.json plan.course_count. 18 places: the nine
+                       requirement groups in eval/gold/cs_major.gold.yaml need 54
+                       units in total and every course here is 3 units, so 18
+                       courses, see data/fulcrum.json degree.places. -->
+                  <span class="k-label">The plan, 17 courses</span>
+                  <span class="k-label">The degree, 18 places</span>
+                </div>
+                <div class="fu-cols" data-cols>
+                  <svg class="fu-wires" data-wires aria-hidden="true" focusable="false" preserveAspectRatio="none"></svg>
+                  <ul class="fu-plan" data-plan></ul>
+                  <ul class="fu-reqs" data-reqs></ul>
+                </div>
+                <p class="fu-status" data-status>
+                  <span class="fu-status__line">Plan read: 17 courses, 51 units, 5 terms.</span>
+                  <span class="fu-status__line fu-status__line--quiet">Computing Science major, 2026 to 2027.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <p class="k-player__caption" data-k-caption></p>
+        <p class="k-sr-only" data-k-live></p>
+      </div>
+
+      <p class="fu-note">
+        <!-- Every course in this plan is 3.0 units: data/fulcrum.json, plan.units,
+             all 17 entries are 3.0, taken from the scraped credits field. Total
+             51.0 units, degree total 54 units from
+             eval/gold/cs_major.gold.yaml program.total_units. -->
+        Each row on the right is one line of the degree, and each dot on that row is one
+        place a course can fill. Every course in this plan is worth 3 units, so one place
+        is one course: the plan holds 51 units and the degree asks for 54. In the left
+        column, F26 is the fall term of 2026 and W27 the winter term of 2027.
+      </p>
+
+      <div class="k-claim-strip">
+        <div class="k-claim">
+          <!-- 3 units short: the engine printed "have 3u, short 3u", captured in
+               data/fulcrum.json, failure.shortfall_units. 54 units:
+               eval/gold/cs_major.gold.yaml, program.total_units. -->
+          <span class="k-claim__value">3<span class="k-claim__unit">units short</span></span>
+          <span class="k-claim__label">on one line of the 54 units the degree asks for, which is one course</span>
+          <span class="k-claim__source">
+            <b>Source:</b> data/fulcrum.json, engine run 2026-07-27, commit d2db13f.
+            <b>Method:</b> the checker in planner/ read the plan file and a copy of the
+            timetable frozen on 2026-06-28, then searched for the way of handing out all
+            17 courses that leaves the smallest gap anywhere. The smallest it could find
+            was 3 units.
+          </span>
+        </div>
+      </div>
+
+      <div class="k-io">
+        <div class="k-io__side k-io__side--in">
+          <span class="k-io__label">Input, the plan file</span>
+<pre class="k-io__pre">plan_id: near_miss_units_short
+terms:
+  - term: "Fall Term 2026"
+    courses: [CMPUT 174, MATH 125, MATH 154, STAT 151]
+  - term: "Winter Term 2027"
+    courses: [CMPUT 175, CMPUT 272, MATH 136]
+  - term: "Fall Term 2027"
+    courses: [CMPUT 201, CMPUT 204, CMPUT 200, CMPUT 291]
+  - term: "Winter Term 2028"
+    courses: [CMPUT 301, CMPUT 333, CMPUT 355]
+  - term: "Fall Term 2028"
+    courses: [CMPUT 303, CMPUT 401, CMPUT 402]</pre>
+          <p class="k-io__note">The whole file, with only its comment block left out. eval/plans/near_miss_units_short.plan.yaml</p>
+        </div>
+        <div class="k-io__side k-io__side--out">
+          <span class="k-io__label">Output, what the checker printed</span>
+<pre class="k-io__pre">$ python -m planner --snapshot eval/snapshots/2026-06-28/offerings.json validate eval/plans/near_miss_units_short.plan.yaml
+
+plan: near_miss_units_short
+snapshot: 2026-06-28
+VERDICT: INVALID
+  FAIL requirement_shortfall: unmet requirement 'senior_cmput_400' (6.0u matching {'subject': 'CMPUT', 'level_in': [400]}): have 3u, short 3u [CMPUT 401]</pre>
+          <p class="k-io__note">Every line the command printed, unedited. It ends with status 1, the signal a script uses for a failure.</p>
+        </div>
+      </div>
+
+      <div class="k-ba">
+        <div class="k-ba__col k-ba__col--before">
+          <span class="k-ba__label">This plan</span>
+          <div class="k-ba__body">
+            <p>Seventeen courses. Two of them are at the 400 level: CMPUT 401 and CMPUT 402.
+            One of those two has to be spent on the wider 300 or 400 line, which leaves the
+            400 only line holding one course where it needs two.</p>
+            <p class="fu-source">eval/plans/near_miss_units_short.plan.yaml, VERDICT: INVALID</p>
+          </div>
+        </div>
+        <div class="k-ba__col k-ba__col--after">
+          <span class="k-ba__label">The same plan, one course added</span>
+          <div class="k-ba__body">
+            <p>Add CMPUT 331, a 300 level course, and the wider line fills up without
+            touching either 400 level course. Both then land on the 400 only line and
+            nothing is left open.</p>
+            <p class="fu-source">eval/plans/valid_174_stream.plan.yaml, VERDICT: VALID</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="k-io">
+        <div class="k-io__side k-io__side--in">
+          <span class="k-io__label">A second plan, same courses, one of them moved</span>
+<pre class="k-io__pre">  - term: "Fall Term 2026"
+    courses: [CMPUT 204, CMPUT 174, MATH 125, MATH 154, STAT 151]
+  - term: "Winter Term 2027"
+    courses: [CMPUT 175, CMPUT 272, MATH 136]</pre>
+          <p class="k-io__note">The first two terms of eval/plans/fail_prereq_order.plan.yaml. CMPUT 204 has been pulled into the very first term.</p>
+        </div>
+        <div class="k-io__side k-io__side--out">
+          <span class="k-io__label">Output, a different kind of failure</span>
+<pre class="k-io__pre">plan: fail_prereq_order
+snapshot: 2026-06-28
+VERDICT: INVALID
+  FAIL prereq_unsatisfied: CMPUT 204 prereq not met before Fall Term 2026: "CMPUT 175 or 275, and CMPUT 272; and one of MATH 100, 114, 117, 134, 144, or 154." [CMPUT 204]</pre>
+          <p class="k-io__note">CMPUT 204 must come after three other courses, and here it comes before all of them. The sentence in quotation marks is the university's own wording, copied off the course page and never rewritten.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================================================================
+       3. WHAT MAKES IT DIFFERENT
+       ================================================================== -->
+  <section class="k-section" aria-labelledby="fu-diff">
+    <h2 class="k-section__title" id="fu-diff">Each course pays for one line, and one line only</h2>
+    <p class="k-section__lede">Three things you can see happen in the run above.</p>
+    <ul class="fu-points">
+      <li class="fu-point">
+        <h3>No course is counted twice</h3>
+        <p>
+          A checker that tallies each requirement on its own would pass this plan, because
+          CMPUT 402 counts toward both senior lines when you look at them one at a time.
+          You watched it get spent on one of them. That is why a place was left open.
+          <span class="fu-source">planner/matching.py</span>
+        </p>
+      </li>
+      <li class="fu-point">
+        <h3>It reports everything wrong, not the first thing</h3>
+        <p>
+          All five checks run, and every failure is collected before anything is printed.
+          A student fixing one problem does not have to run it again to find out about the
+          next one.
+          <span class="fu-source">planner/validate.py</span>
+        </p>
+      </li>
+      <li class="fu-point">
+        <h3>The same plan gets the same answer tomorrow</h3>
+        <p>
+          The checker refuses to run against the live website at all. It reads a dated
+          copy of the timetable, so a verdict can be repeated, argued with, and checked by
+          somebody else.
+          <span class="fu-source">planner/snapshot.py</span>
+        </p>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ==================================================================
+       4. PROOF
+       ================================================================== -->
+  <section class="k-section" aria-labelledby="fu-proof">
+    <h2 class="k-section__title" id="fu-proof">Forty seven questions, marked against an answer key written first</h2>
+    <p class="k-section__lede">
+      The other half of the project answers questions in writing. To find out which way of
+      answering worked best, 47 questions were written down, the correct answer to each was
+      worked out first, and three setups were run over the same 47 and marked against that
+      key.
+    </p>
+
+    <div class="k-claim-strip">
+      <div class="k-claim">
+        <!-- 0.7234 and 0.6489: reports/results.json, quality_overall for Routed
+             and for RAG-always. 0.7234 - 0.6489 = 0.0745, shown as 0.07. -->
+        <span class="k-claim__value">0.72<span class="k-claim__unit">out of 1</span></span>
+        <span class="k-claim__label">for the setup that picks its method per question, ahead of the next best by 0.07</span>
+        <span class="k-claim__source">
+          <b>Source:</b> reports/results.json, quality_overall for Routed, the row that
+          picks per question (0.7234), against RAG-always, the row that always searches
+          the pages (0.6489).
+          <b>Method:</b> 47 questions, one real run against the DeepSeek model
+          deepseek-v4-flash, each answer marked from 0 to 1 by a program, against the
+          answer key in eval/gold/cs_major.gold.yaml and the timetable frozen on
+          2026-06-28.
+        </span>
+      </div>
+      <div class="k-claim">
+        <!-- 0.004294 US dollars: reports/results.json, cost_usd_total for Routed.
+             That is 0.4294 US cents, shown as 0.43. -->
+        <span class="k-claim__value">0.43<span class="k-claim__unit">US cents</span></span>
+        <span class="k-claim__label">to answer all 47 questions once, using that same setup</span>
+        <span class="k-claim__source">
+          <b>Source:</b> reports/results.json, cost_usd_total for Routed, the row that
+          picks per question, 0.004294 US dollars.
+          <b>Method:</b> added up from the token counts the model itself reported on each
+          of the 47 answers, not estimated from a price list.
+        </span>
+      </div>
+    </div>
+
+    <div class="k-scroll-x fu-table-wrap">
+      <table class="fu-table">
+        <caption>Every figure from reports/results.json and reports/results.csv. One run of 47 questions, against the timetable frozen on 2026-06-28. The file records that this was the real model and not the offline stand-in.</caption>
+        <thead>
+          <tr>
+            <th scope="col">How it answers</th>
+            <th scope="col">Score out of 1</th>
+            <th scope="col">Timetable answers with nothing made up</th>
+            <th scope="col">Cost for all 47</th>
+            <th scope="col">Middle answer time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows: reports/results.json, keys RAG-always, CAG-always, Routed.
+               Score = quality_overall. Cost = cost_usd_total. Middle answer time
+               = latency_p50 in seconds. The third column is citation_pass_rate
+               (0.9, 1, 0.9) over the 20 timetable questions counted in
+               eval/queries/queries.yaml, so 18, 20 and 18 of 20. -->
+          <tr>
+            <th scope="row">Always search the course pages</th>
+            <td class="fu-num">0.6489</td>
+            <td class="fu-num">18 of 20</td>
+            <td class="fu-num">$0.001557</td>
+            <td class="fu-num">1.01 s</td>
+          </tr>
+          <tr>
+            <th scope="row">Always read the fixed rule sheet</th>
+            <td class="fu-num">0.4468</td>
+            <td class="fu-num">20 of 20</td>
+            <td class="fu-num">$0.004150</td>
+            <td class="fu-num">1.22 s</td>
+          </tr>
+          <tr data-best="true">
+            <th scope="row">Pick whichever suits the question</th>
+            <td class="fu-num">0.7234</td>
+            <td class="fu-num">18 of 20</td>
+            <td class="fu-num">$0.004294</td>
+            <td class="fu-num">1.11 s</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="fu-note">
+      <!-- Question mix counted from the 47 entries in eval/queries/queries.yaml:
+           factual_offered 20, factual_prereq 16, plan_validity 7,
+           plan_construction 4. -->
+      The 47 questions came in four kinds. Twenty asked whether a named course runs in a
+      named term. Sixteen asked what you have to take before a named course. Seven handed
+      over a whole plan and asked whether it is valid. Four asked for a plan to be built
+      from nothing, and those four are the ones nothing could do.
+      <span class="fu-source">eval/queries/queries.yaml</span>
+    </p>
+  </section>
+
+  <!-- ==================================================================
+       5. HONEST LIMITS
+       ================================================================== -->
+  <section class="k-section" aria-labelledby="fu-limits">
+    <h2 class="k-section__title" id="fu-limits">It cannot build the plan for you, and it measured exactly how badly</h2>
+    <div class="k-limits">
+      <h3 class="k-limits__title">What this does not do</h3>
+      <p class="k-limits__lede">Written down here so that nobody has to find it out later.</p>
+      <ul class="k-limits__list">
+        <li>
+          <!-- plan_construction: reports/results.json, quality_by_type.plan_construction
+               is 0.0 for RAG-always, CAG-always and Routed alike. Same value in
+               reports/results.csv, column plan_construction. -->
+          <b>It cannot write you a plan.</b> Four of the 47 questions asked for a course
+          plan to be built from scratch. All three setups scored <b>0.0 out of 1</b> on
+          those four. The plans came back looking sensible, and the checker rejected every
+          one of them. Fulcrum can tell you that a plan is wrong. It cannot yet tell you
+          what to take.
+          <span class="fu-source">reports/results.json, quality_by_type.plan_construction, all three setups</span>
+        </li>
+        <li>
+          <!-- program name and catalog_year: eval/gold/cs_major.gold.yaml, program
+               block, "Computing Science Major", catalog_year "2026-2027".
+               31 prerequisite entries: the prerequisites list in the same file. -->
+          <b>It knows one degree, for one year.</b> The Computing Science major for the
+          2026 to 2027 calendar, and nothing else. Only 31 courses have a prerequisite
+          rule (what you must take first) that a person checked by hand, so a plan built
+          out of courses beyond that set gets a warning instead of a verdict.
+          <span class="fu-source">eval/gold/cs_major.gold.yaml</span>
+        </li>
+        <li>
+          <!-- snapshot_date and term_order: eval/snapshots/2026-06-28/offerings.json,
+               four terms from Spring Term 2026 to Winter Term 2027. The fallback to
+               season recurrence for later terms is in planner/validate.py. -->
+          <b>The timetable is a photograph, taken on 2026-06-28.</b> It lists four terms,
+          spring 2026 through winter 2027. Any later term in a plan is judged on which
+          season the course usually runs in, rather than on a real timetable, because no
+          real timetable for those terms exists yet.
+          <span class="fu-source">eval/snapshots/2026-06-28/offerings.json</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ==================================================================
+       6. HOW IT WORKS
+       ================================================================== -->
+  <section class="k-section" aria-labelledby="fu-how">
+    <h2 class="k-section__title" id="fu-how">Six pieces, and the file each one lives in</h2>
+    <p class="k-section__lede">In order, from the university's website to the verdict on this page.</p>
+    <ol class="fu-steps">
+      <li>
+        <!-- 954 course records: corpus/courses.jsonl, one record per line,
+             954 lines. -->
+        A reader visits the university's course pages and saves them, then a second pass
+        turns the saved pages into 954 plain course records.
+        <span class="fu-source"><a href="https://github.com/samad-zeeshan/Fulcrum/blob/main/fetch.py">fetch.py</a>, <a href="https://github.com/samad-zeeshan/Fulcrum/blob/main/parse.py">parse.py</a></span>
+      </li>
+      <li>
+        One dated copy of the timetable is frozen and never touched again, so the same
+        plan always gets the same verdict.
+        <span class="fu-source"><a href="https://github.com/samad-zeeshan/Fulcrum/blob/main/eval/snapshots/build_snapshot.py">eval/snapshots/build_snapshot.py</a></span>
+      </li>
+      <li>
+        The degree rules are typed up by hand from the calendar. Every prerequisite
+        sentence is kept word for word, so the checker can quote it back at you.
+        <span class="fu-source"><a href="https://github.com/samad-zeeshan/Fulcrum/blob/main/eval/gold/cs_major.gold.yaml">eval/gold/cs_major.gold.yaml</a></span>
+      </li>
+      <li>
+        The checker runs the first four checks over a plan: nothing counted twice, nothing
+        that cancels out, nothing sitting in a term it does not run in, nothing taken
+        before what it needs.
+        <span class="fu-source"><a href="https://github.com/samad-zeeshan/Fulcrum/blob/main/planner/validate.py">planner/validate.py</a></span>
+      </li>
+      <li>
+        Then the fifth, which is the hard one. It hands every course to at most one
+        requirement line and searches for the arrangement that leaves the smallest gap.
+        That is the step the board on this page draws.
+        <span class="fu-source"><a href="https://github.com/samad-zeeshan/Fulcrum/blob/main/planner/matching.py">planner/matching.py</a></span>
+      </li>
+      <li>
+        A separate half answers written questions, and a marker grades those answers
+        against the same rules the checker uses.
+        <span class="fu-source"><a href="https://github.com/samad-zeeshan/Fulcrum/blob/main/eval/metrics/harness.py">eval/metrics/harness.py</a>, <a href="https://github.com/samad-zeeshan/Fulcrum/blob/main/eval/metrics/grade.py">eval/metrics/grade.py</a></span>
+      </li>
+    </ol>
+  </section>
+
+</main>
+
+<footer class="k-footer">
+  <div class="k-container k-footer__row">
+    <ul class="k-footer__links">
+      <li><a href="https://github.com/samad-zeeshan/Fulcrum">Repository</a></li>
+      <li><a href="data/fulcrum.json">Captured run data</a></li>
+      <li><a href="https://github.com/samad-zeeshan/Fulcrum/blob/main/docs/NOTES.md">Notes behind this page</a></li>
+    </ul>
+    <span class="k-format-badge">Course plan in, verdict out</span>
+    <span class="k-footer__date">Page built 2026-07-27</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var PHASE_CHECKED = { dupes: 1, offered: 1, order: 1, match: 1, gap: 1, verdict: 1 };
+  var PHASE_WIRED   = { match: 1, gap: 1, verdict: 1 };
+  var PHASE_GAP     = { gap: 1, verdict: 1 };
+
+  var SVG_NS = "http://www.w3.org/2000/svg";
+
+  /* "Fall Term 2026" becomes "F26". Only the season letter and two digits fit
+     the marker column. The note under the player spells it out. */
+  function shortTerm(name) {
+    var parts = String(name).split(" ");
+    return parts[0].charAt(0) + parts[parts.length - 1].slice(2);
+  }
+
+  function el(tag, cls) {
+    var node = document.createElement(tag);
+    if (cls) { node.className = cls; }
+    return node;
+  }
+
+  function boot() {
+    var board = document.getElementById("fu-board");
+    var status = board.querySelector("[data-status]");
+
+    Kit.loadData("fulcrum", "data/fulcrum.json").then(function (data) {
+
+      var cols   = board.querySelector("[data-cols]");
+      var wires  = board.querySelector("[data-wires]");
+      var planEl = board.querySelector("[data-plan]");
+      var reqsEl = board.querySelector("[data-reqs]");
+
+      /* ---- left column, one row per course --------------------------- */
+
+      var pins = {};
+      data.plan.terms.forEach(function (term) {
+        term.courses.forEach(function (code, i) {
+          var li = el("li", "fu-course" + (i === 0 ? " fu-course--first" : ""));
+          var t = el("span", "fu-course__term");
+          t.textContent = i === 0 ? shortTerm(term.term) : "";
+          var c = el("span", "fu-course__code");
+          c.textContent = code;
+          var pin = el("span", "fu-course__pin");
+          li.appendChild(t);
+          li.appendChild(c);
+          li.appendChild(el("span", "fu-course__mark"));
+          li.appendChild(pin);
+          planEl.appendChild(li);
+          pins[code] = pin;
+        });
+      });
+
+      /* ---- right column, one row per requirement group ---------------- */
+
+      var terminals = {};
+      data.requirements.forEach(function (req) {
+        var li = el("li", "fu-req");
+        li.setAttribute("data-group", req.group_id);
+        li.setAttribute("data-short", req.shortfall_units > 0 ? "true" : "false");
+
+        var slot = el("span", "fu-req__pins");
+        for (var i = 0; i < req.places; i++) {
+          var pin = el("span", "fu-pin");
+          var course = req.assigned[i];
+          if (course) {
+            pin.setAttribute("data-filled", "true");
+            terminals[course] = pin;
+          } else {
+            pin.setAttribute("data-filled", "false");
+          }
+          slot.appendChild(pin);
+        }
+
+        var name = el("span", "fu-req__name");
+        name.textContent = req.plain;
+
+        var count = el("span", "fu-req__count");
+        count.setAttribute("data-need", "needs " + req.places);
+        count.setAttribute("data-have", req.assigned.length + " of " + req.places);
+        count.textContent = count.getAttribute("data-need");
+
+        li.appendChild(slot);
+        li.appendChild(name);
+        li.appendChild(count);
+        reqsEl.appendChild(li);
+      });
+
+      /* ---- the threads ------------------------------------------------ */
+
+      var order = [];
+      data.plan.terms.forEach(function (t) {
+        t.courses.forEach(function (c) { order.push(c); });
+      });
+
+      var frame = 0;
+
+      function drawWires() {
+        frame = 0;
+        var box = cols.getBoundingClientRect();
+        if (!box.width || !box.height) { return; }
+
+        wires.setAttribute("viewBox", "0 0 " + box.width + " " + box.height);
+        while (wires.firstChild) { wires.removeChild(wires.firstChild); }
+        if (board.getAttribute("data-wired") !== "true") { return; }
+
+        var gap = board.getAttribute("data-gap") === "true";
+
+        order.forEach(function (code) {
+          var from = pins[code];
+          var to = terminals[code];
+          if (!from || !to) { return; }
+          var a = from.getBoundingClientRect();
+          var b = to.getBoundingClientRect();
+          var ax = a.left - box.left + a.width / 2;
+          var ay = a.top - box.top + a.height / 2;
+          var bx = b.left - box.left + b.width / 2;
+          var by = b.top - box.top + b.height / 2;
+          var dx = Math.max(16, (bx - ax) * 0.45);
+          var path = document.createElementNS(SVG_NS, "path");
+          path.setAttribute("d",
+            "M " + ax.toFixed(1) + " " + ay.toFixed(1) +
+            " C " + (ax + dx).toFixed(1) + " " + ay.toFixed(1) +
+            ", " + (bx - dx).toFixed(1) + " " + by.toFixed(1) +
+            ", " + bx.toFixed(1) + " " + by.toFixed(1));
+          path.setAttribute("class",
+            "fu-wire" + (gap && code === data.failure.diverted_course ? " fu-wire--diverted" : ""));
+          wires.appendChild(path);
+        });
+      }
+
+      function scheduleDraw() {
+        if (frame) { return; }
+        frame = window.requestAnimationFrame(drawWires);
+      }
+
+      if (typeof window.ResizeObserver === "function") {
+        new window.ResizeObserver(scheduleDraw).observe(cols);
+      } else {
+        window.addEventListener("resize", scheduleDraw);
+      }
+
+      /* ---- the player ------------------------------------------------- */
+
+      var counts = reqsEl.querySelectorAll(".fu-req__count");
+
+      function setStatus(step) {
+        status.textContent = "";
+        var main = el("span", "fu-status__line");
+        main.textContent = step.status;
+        status.appendChild(main);
+        var sub = el("span", "fu-status__line fu-status__line--quiet");
+        sub.textContent = step.id === "verdict"
+          ? data.failure.detail_short
+          : "Computing Science major, 2026 to 2027.";
+        status.appendChild(sub);
+      }
+
+      Kit.stepPlayer(document.getElementById("fu-run"), {
+        steps: data.steps,
+        /* Under two seconds, so the first thing the reader sees after pressing
+           Play is the run moving, not a still frame. */
+        autoplayMs: 1900,
+        label: "Recorded run of the degree plan checker",
+        onRender: function (step) {
+          var wired = !!PHASE_WIRED[step.id];
+          board.setAttribute("data-checked", PHASE_CHECKED[step.id] ? "true" : "false");
+          board.setAttribute("data-wired", wired ? "true" : "false");
+          board.setAttribute("data-gap", PHASE_GAP[step.id] ? "true" : "false");
+
+          for (var i = 0; i < counts.length; i++) {
+            counts[i].textContent =
+              counts[i].getAttribute(wired ? "data-have" : "data-need");
+          }
+
+          setStatus(step);
+          drawWires();
+        }
+      });
+
+    })["catch"](function (err) {
+      /* Reached only when neither data/fulcrum.json nor data/fulcrum.js loaded.
+         Say so in the page rather than leaving an empty box behind. */
+      if (status) {
+        status.textContent =
+          "The recorded run could not be loaded. The numbers are in data/fulcrum.json.";
+      }
+      if (window.console && window.console.error) { window.console.error(err); }
+    });
+  }
+
+  /* kit.js is deferred, so it has not run yet while this inline script is
+     being parsed. DOMContentLoaded fires after every deferred script. */
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+</body>
+</html>
