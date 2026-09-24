@@ -45,6 +45,22 @@ eval/        gold key, queries, snapshots, and the metrics harness
 reports/     generated results and plots
 ```
 
+## How it works
+
+A router sends each question to a RAG path for course offerings or a CAG path for degree rules, and a constraint engine grades every answer against a frozen snapshot and a hand-checked rule set.
+
+![Fulcrum system overview](docs/diagrams/overview.png)
+The scraper feeds a frozen snapshot. The router, RAG and CAG answer questions with DeepSeek. The engine in `planner/` only computes expected verdicts and grades.
+
+![One plan request, answered and graded](docs/diagrams/main-flow.png)
+A "build me a plan" question takes both paths. The plan in the reply is pulled out as YAML, and `planner.validate` decides whether it scores.
+
+![From catalogue pages to a frozen snapshot](docs/diagrams/pipeline.png)
+Course pages come over httpx and program pages through Playwright. Both are parsed to JSONL, then frozen into a dated snapshot that the index and the engine read.
+
+Interactive versions with pan, zoom and theme switch: `docs/diagrams/overview.html`, `docs/diagrams/main-flow.html`, `docs/diagrams/pipeline.html`
+
+
 ## Running it
 
 Most things go through the Makefile.
